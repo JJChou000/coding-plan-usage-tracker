@@ -104,20 +104,22 @@
 
 > **前置依赖**：阶段 0 全部完成
 
+- [x] **验收记录**：2026-03-20 已完成阶段 1 验收，详见 `docs/Stage1_Acceptance_Report.md`
+
 ### 1.1 实现配置存储模块
 
-- [ ] **操作**：编写 `src/main/configStore.ts`
+- [x] **操作**：编写 `src/main/configStore.ts`
   - 导入 `electron-store`
   - 创建 store 实例，schema 对应 `AppConfig` 接口
   - 设置默认值：`refreshInterval: 60`，`providers: []`，`windowPosition: {x: 100, y: 100}`，`windowState: 'normal'`，`isExpanded: false`
   - 导出 `getConfig(): AppConfig`、`setConfig(config: Partial<AppConfig>): void`、`getProviders(): ProviderConfig[]`、`setProviders(providers: ProviderConfig[]): void` 函数
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. TypeScript 编译无错误
   2. 函数签名与 `AppConfig` 类型一致
 
 ### 1.2 实现窗口管理模块
 
-- [ ] **操作**：编写 `src/main/window.ts`
+- [x] **操作**：编写 `src/main/window.ts`
   - 创建 `createFloatingWindow()` 函数，返回 `BrowserWindow` 实例：
     - `width: 320`, `height: 120`（初始折叠态，2个厂商 × 36px + padding）
     - `transparent: true`, `frame: false`, `alwaysOnTop: true`
@@ -138,14 +140,14 @@
     - 根据状态计算吸附坐标（参考 `Engineering.md` 6.3 节的算法）
     - 使用 `win.setPosition()` 动画移动到边缘
   - 实现 `resizeWindow(win, width, height)` 函数：响应 IPC `window:resize` 事件
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. `npm run dev` 启动后显示无边框、透明、置顶的浮窗
   2. 浮窗不在任务栏显示
   3. 浮窗可以拖拽移动
 
 ### 1.3 实现系统托盘
 
-- [ ] **操作**：编写 `src/main/tray.ts`
+- [x] **操作**：编写 `src/main/tray.ts`
   - 创建 `createTray()` 函数
   - 使用 `nativeImage.createFromPath()` 加载托盘图标（先用 Electron 默认图标占位）
   - 创建右键菜单 `Menu.buildFromTemplate()`：
@@ -154,14 +156,14 @@
     - 分隔线
     - 「退出」→ `app.quit()`
   - 设置 `tray.setToolTip('Coding Plan Usage Tracker')`
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 系统托盘显示图标
   2. 右键托盘图标显示 3 个菜单项 + 分隔线
   3. 点击「退出」可关闭应用
 
 ### 1.4 组装主进程入口
 
-- [ ] **操作**：修改 `src/main/main.ts`（或 `index.ts`，取决于脚手架生成的文件名）
+- [x] **操作**：修改 `src/main/main.ts`（或 `index.ts`，取决于脚手架生成的文件名）
   - 导入 `createFloatingWindow`、`createTray`、`configStore` 模块
   - 在 `app.whenReady()` 中：
     1. 调用 `createFloatingWindow()` 获取主窗口
@@ -169,18 +171,18 @@
     3. 注册所有 IPC 事件处理器（`config:get`、`config:set`、`usage:fetch` 等，参考 `Engineering.md` 4.1 节）
     4. `usage:fetch` 的处理逻辑先返回 mock 数据（占位）
   - 在 `app.on('window-all-closed')` 中：阻止退出（浮窗关闭不退出，由托盘控制）
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 应用启动后显示浮窗 + 托盘图标
   2. 关闭浮窗后托盘图标仍在，应用不退出
   3. IPC 通道已注册（可通过日志确认）
 
 ### 1.5 实现 Preload 脚本
 
-- [ ] **操作**：编写 `src/preload/preload.ts`（或修改脚手架生成的 preload 文件）
+- [x] **操作**：编写 `src/preload/preload.ts`（或修改脚手架生成的 preload 文件）
   - 使用 `contextBridge.exposeInMainWorld('electronAPI', { ... })`
   - 暴露的 API 完全按照 `Engineering.md` 4.2 节的定义实现
   - 确保所有方法都通过 `ipcRenderer.invoke()` 或 `ipcRenderer.send()` 通信
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. TypeScript 编译无错误
   2. 在渲染进程的 console 中输入 `window.electronAPI` 可以看到暴露的 API 对象
 

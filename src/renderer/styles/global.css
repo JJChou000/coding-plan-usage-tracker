@@ -27,10 +27,15 @@ body {
   justify-content: stretch;
 }
 
+body.is-dragging {
+  cursor: grabbing;
+}
+
 .app-shell {
   width: 100%;
   min-height: 100%;
   padding: 16px;
+  cursor: grab;
   background:
     radial-gradient(circle at top right, rgba(74, 222, 128, 0.16), transparent 38%),
     linear-gradient(160deg, rgba(17, 19, 26, 0.94), rgba(27, 32, 44, 0.88));
