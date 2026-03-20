@@ -1,0 +1,29 @@
+:root {
+  /* 颜色 */
+  --bg-primary: rgba(25, 25, 35, 0.85);
+  --bg-secondary: rgba(35, 35, 50, 0.6);
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --text-primary: #e0e0e0;
+  --text-secondary: #8b8b9e;
+  --border-color: rgba(255, 255, 255, 0.08);
+
+  /* 进度条颜色 */
+  --progress-green: #4ade80;
+  --progress-yellow: #facc15;
+  --progress-red: #f87171;
+  --progress-bg: rgba(255, 255, 255, 0.1);
+
+  /* 尺寸 */
+  --window-width: 320px;
+  --row-height: 36px;
+  --padding: 8px;
+  --border-radius: 12px;
+  --handle-width: 24px;
+
+  /* 动画 */
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+
+  /* 毛玻璃 */
+  --blur-amount: 20px;
+}

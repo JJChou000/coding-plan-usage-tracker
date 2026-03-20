@@ -12,7 +12,7 @@
 
 ### 0.1 初始化 Electron + Vite + React + TypeScript 项目
 
-- [ ] **操作**：
+- [x] **操作**：
   1. 在项目根目录执行 `npm create @aspect-apps/electron-vite@latest . -- --template react-ts`（如此脚手架不可用，则使用 `npm create electron-vite@latest . -- --template react-ts`）
   2. 如果脚手架工具不支持 `./` 目标目录，在临时目录创建后将所有文件移动到项目根目录
   3. 执行 `npm install`
@@ -24,23 +24,23 @@
 
 ### 0.2 安装额外依赖
 
-- [ ] **操作**：
+- [x] **操作**：
   ```bash
   npm install electron-store
   ```
-- [ ] **验收标准**：`node_modules/electron-store` 目录存在，`package.json` 中有该依赖
+- [x] **验收标准**：`node_modules/electron-store` 目录存在，`package.json` 中有该依赖
 
 ### 0.3 创建共享类型文件
 
-- [ ] **操作**：创建 `src/shared/types.ts`，将 `docs/Engineering.md` 第 3.1 节中的全部 TypeScript 接口定义原封不动复制到此文件并导出
-- [ ] **验收标准**：
+- [x] **操作**：创建 `src/shared/types.ts`，将 `docs/Engineering.md` 第 3.1 节中的全部 TypeScript 接口定义原封不动复制到此文件并导出
+- [x] **验收标准**：
   1. 文件存在且包含 `QuotaDimension`、`ProviderUsageData`、`AuthField`、`IProvider`、`ProviderConfig`、`AppConfig`、`AppState` 共 7 个接口/类型
   2. 所有接口使用 `export` 导出
   3. TypeScript 编译无错误（`npx tsc --noEmit`）
 
 ### 0.4 配置项目结构
 
-- [ ] **操作**：
+- [x] **操作**：
   1. 按照 `docs/Engineering.md` 第 5 节的目录结构，创建所有缺失的目录和空文件
   2. 创建 `resources/icons/` 目录
   3. 创建 `src/renderer/styles/variables.css`，写入以下 CSS 变量：
@@ -93,7 +93,7 @@
        overflow: hidden;
      }
      ```
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 所有目录和文件已创建
   2. `variables.css` 和 `global.css` 内容正确
   3. `npm run dev` 仍可正常启动
