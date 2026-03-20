@@ -1,0 +1,575 @@
+# 开发任务清单 (Development Tasks)
+
+> **本文档是 AI 后续写代码的唯一执行路线图。** 请严格按照阶段和步骤顺序执行。
+> 每个任务包含：具体操作步骤、涉及的文件、验收标准。
+> 前置依赖已标注，未完成前置任务时不得跳过。
+
+---
+
+## 阶段 0：环境搭建
+
+> **前置依赖**：Node.js 20+, npm 10+, Git 已安装
+
+### 0.1 初始化 Electron + Vite + React + TypeScript 项目
+
+- [ ] **操作**：
+  1. 在项目根目录执行 `npm create @aspect-apps/electron-vite@latest . -- --template react-ts`（如此脚手架不可用，则使用 `npm create electron-vite@latest . -- --template react-ts`）
+  2. 如果脚手架工具不支持 `./` 目标目录，在临时目录创建后将所有文件移动到项目根目录
+  3. 执行 `npm install`
+  4. 执行 `npm run dev` 确认能正常启动 Electron 窗口
+- [ ] **验收标准**：
+  1. `npm run dev` 成功启动，显示 Electron 窗口
+  2. 项目中存在 `src/main/`、`src/renderer/`、`src/preload/` 目录
+  3. `package.json` 中包含 `electron`、`react`、`vite` 依赖
+
+### 0.2 安装额外依赖
+
+- [ ] **操作**：
+  ```bash
+  npm install electron-store
+  ```
+- [ ] **验收标准**：`node_modules/electron-store` 目录存在，`package.json` 中有该依赖
+
+### 0.3 创建共享类型文件
+
+- [ ] **操作**：创建 `src/shared/types.ts`，将 `docs/Engineering.md` 第 3.1 节中的全部 TypeScript 接口定义原封不动复制到此文件并导出
+- [ ] **验收标准**：
+  1. 文件存在且包含 `QuotaDimension`、`ProviderUsageData`、`AuthField`、`IProvider`、`ProviderConfig`、`AppConfig`、`AppState` 共 7 个接口/类型
+  2. 所有接口使用 `export` 导出
+  3. TypeScript 编译无错误（`npx tsc --noEmit`）
+
+### 0.4 配置项目结构
+
+- [ ] **操作**：
+  1. 按照 `docs/Engineering.md` 第 5 节的目录结构，创建所有缺失的目录和空文件
+  2. 创建 `resources/icons/` 目录
+  3. 创建 `src/renderer/styles/variables.css`，写入以下 CSS 变量：
+     ```css
+     :root {
+       /* 颜色 */
+       --bg-primary: rgba(25, 25, 35, 0.85);
+       --bg-secondary: rgba(35, 35, 50, 0.6);
+       --bg-hover: rgba(255, 255, 255, 0.05);
+       --text-primary: #e0e0e0;
+       --text-secondary: #8b8b9e;
+       --border-color: rgba(255, 255, 255, 0.08);
+       
+       /* 进度条颜色 */
+       --progress-green: #4ade80;
+       --progress-yellow: #facc15;
+       --progress-red: #f87171;
+       --progress-bg: rgba(255, 255, 255, 0.1);
+       
+       /* 尺寸 */
+       --window-width: 320px;
+       --row-height: 36px;
+       --padding: 8px;
+       --border-radius: 12px;
+       --handle-width: 24px;
+       
+       /* 动画 */
+       --transition-fast: 150ms ease;
+       --transition-normal: 250ms ease;
+       
+       /* 毛玻璃 */
+       --blur-amount: 20px;
+     }
+     ```
+  4. 创建 `src/renderer/styles/global.css`，写入全局样式重置和毛玻璃基础：
+     ```css
+     @import './variables.css';
+
+     * {
+       margin: 0;
+       padding: 0;
+       box-sizing: border-box;
+     }
+
+     body {
+       font-family: 'Segoe UI', -apple-system, sans-serif;
+       color: var(--text-primary);
+       background: transparent;
+       user-select: none;
+       overflow: hidden;
+     }
+     ```
+- [ ] **验收标准**：
+  1. 所有目录和文件已创建
+  2. `variables.css` 和 `global.css` 内容正确
+  3. `npm run dev` 仍可正常启动
+
+---
+
+## 阶段 1：Electron 主进程核心
+
+> **前置依赖**：阶段 0 全部完成
+
+### 1.1 实现配置存储模块
+
+- [ ] **操作**：编写 `src/main/configStore.ts`
+  - 导入 `electron-store`
+  - 创建 store 实例，schema 对应 `AppConfig` 接口
+  - 设置默认值：`refreshInterval: 60`，`providers: []`，`windowPosition: {x: 100, y: 100}`，`windowState: 'normal'`，`isExpanded: false`
+  - 导出 `getConfig(): AppConfig`、`setConfig(config: Partial<AppConfig>): void`、`getProviders(): ProviderConfig[]`、`setProviders(providers: ProviderConfig[]): void` 函数
+- [ ] **验收标准**：
+  1. TypeScript 编译无错误
+  2. 函数签名与 `AppConfig` 类型一致
+
+### 1.2 实现窗口管理模块
+
+- [ ] **操作**：编写 `src/main/window.ts`
+  - 创建 `createFloatingWindow()` 函数，返回 `BrowserWindow` 实例：
+    - `width: 320`, `height: 120`（初始折叠态，2个厂商 × 36px + padding）
+    - `transparent: true`, `frame: false`, `alwaysOnTop: true`
+    - `skipTaskbar: true`（不在任务栏显示）
+    - `resizable: false`
+    - `webPreferences.preload` 指向 preload 脚本路径
+  - 创建 `createSettingsWindow()` 函数，返回设置面板窗口：
+    - `width: 500`, `height: 400`
+    - `frame: true`（有标题栏）
+    - `alwaysOnTop: false`
+    - `title: 'Coding Plan Usage Tracker - 设置'`
+  - 实现 `setupWindowDrag(win)` 函数：
+    - 监听 IPC `window:set-position` 事件
+    - 调用 `win.setPosition(x, y)` 更新位置
+    - 保存位置到 configStore
+  - 实现 `setupEdgeDocking(win)` 函数：
+    - 监听 IPC `window:set-state` 事件
+    - 根据状态计算吸附坐标（参考 `Engineering.md` 6.3 节的算法）
+    - 使用 `win.setPosition()` 动画移动到边缘
+  - 实现 `resizeWindow(win, width, height)` 函数：响应 IPC `window:resize` 事件
+- [ ] **验收标准**：
+  1. `npm run dev` 启动后显示无边框、透明、置顶的浮窗
+  2. 浮窗不在任务栏显示
+  3. 浮窗可以拖拽移动
+
+### 1.3 实现系统托盘
+
+- [ ] **操作**：编写 `src/main/tray.ts`
+  - 创建 `createTray()` 函数
+  - 使用 `nativeImage.createFromPath()` 加载托盘图标（先用 Electron 默认图标占位）
+  - 创建右键菜单 `Menu.buildFromTemplate()`：
+    - 「刷新数据」→ 向渲染进程发送 `app:refresh`
+    - 「设置」→ 调用 `createSettingsWindow()` 或聚焦已有的设置窗口
+    - 分隔线
+    - 「退出」→ `app.quit()`
+  - 设置 `tray.setToolTip('Coding Plan Usage Tracker')`
+- [ ] **验收标准**：
+  1. 系统托盘显示图标
+  2. 右键托盘图标显示 3 个菜单项 + 分隔线
+  3. 点击「退出」可关闭应用
+
+### 1.4 组装主进程入口
+
+- [ ] **操作**：修改 `src/main/main.ts`（或 `index.ts`，取决于脚手架生成的文件名）
+  - 导入 `createFloatingWindow`、`createTray`、`configStore` 模块
+  - 在 `app.whenReady()` 中：
+    1. 调用 `createFloatingWindow()` 获取主窗口
+    2. 调用 `createTray()` 创建托盘
+    3. 注册所有 IPC 事件处理器（`config:get`、`config:set`、`usage:fetch` 等，参考 `Engineering.md` 4.1 节）
+    4. `usage:fetch` 的处理逻辑先返回 mock 数据（占位）
+  - 在 `app.on('window-all-closed')` 中：阻止退出（浮窗关闭不退出，由托盘控制）
+- [ ] **验收标准**：
+  1. 应用启动后显示浮窗 + 托盘图标
+  2. 关闭浮窗后托盘图标仍在，应用不退出
+  3. IPC 通道已注册（可通过日志确认）
+
+### 1.5 实现 Preload 脚本
+
+- [ ] **操作**：编写 `src/preload/preload.ts`（或修改脚手架生成的 preload 文件）
+  - 使用 `contextBridge.exposeInMainWorld('electronAPI', { ... })`
+  - 暴露的 API 完全按照 `Engineering.md` 4.2 节的定义实现
+  - 确保所有方法都通过 `ipcRenderer.invoke()` 或 `ipcRenderer.send()` 通信
+- [ ] **验收标准**：
+  1. TypeScript 编译无错误
+  2. 在渲染进程的 console 中输入 `window.electronAPI` 可以看到暴露的 API 对象
+
+---
+
+## 阶段 2：UI 组件开发
+
+> **前置依赖**：阶段 1 全部完成
+
+### 2.1 实现 ProgressBar 进度条组件
+
+- [ ] **操作**：编写 `src/renderer/components/ProgressBar.tsx` 和 `ProgressBar.css`
+  - **Props**：`percent: number`（0-100）、`size?: 'sm' | 'md'`（默认 'md'）
+  - **渲染**：外层容器 div + 内层填充 div
+  - **颜色逻辑**：
+    - `0-60%` → `var(--progress-green)` 绿色
+    - `60-80%` → `var(--progress-yellow)` 黄色
+    - `80-100%` → `var(--progress-red)` 红色
+  - **CSS**：
+    - 外层：`height: 6px`（md）或 `4px`（sm），`background: var(--progress-bg)`，`border-radius: 3px`
+    - 内层：`width` 用 `percent%`，`transition: width var(--transition-normal)`
+    - 内层添加微弱发光效果：`box-shadow: 0 0 6px currentColor`
+- [ ] **验收标准**：
+  1. 组件渲染出进度条
+  2. 传入不同 percent 值，条宽和颜色正确变化
+  3. 进度变化时有平滑过渡动画
+
+### 2.2 实现 CollapsedView 折叠态组件
+
+- [ ] **操作**：编写 `src/renderer/components/CollapsedView.tsx` 和 `CollapsedView.css`
+  - **Props**：`providers: ProviderUsageData[]`，`configs: ProviderConfig[]`，`onToggleExpand: () => void`
+  - **渲染逻辑**（每个 provider 一行）：
+    1. 厂商图标（16x16 `<img>` 或 emoji 占位）
+    2. 厂商名称（文字，如 "智谱"）
+    3. `<ProgressBar>` 组件，显示该厂商在 `ProviderConfig.checkedDimensions` 中勾选的**第一个**维度的百分比
+    4. 百分比数字文字（如 "31%"）
+    5. 重置时间（如 "⏱ 12:00"），若无重置时间则不显示
+  - 点击整个组件区域触发 `onToggleExpand`
+  - **CSS**：
+    - 每行高度 `var(--row-height)`
+    - 使用 flexbox 布局：`图标 名称 | 进度条 百分比 | 时间`
+    - 鼠标悬停时背景色微变 `var(--bg-hover)`
+    - cursor: pointer
+- [ ] **验收标准**：
+  1. 显示所有已配置厂商的折叠行
+  2. 只展示勾选维度的百分比
+  3. 点击可触发展开回调
+
+### 2.3 实现 ExpandedView 展开态组件
+
+- [ ] **操作**：编写 `src/renderer/components/ExpandedView.tsx` 和 `ExpandedView.css`
+  - **Props**：`providers: ProviderUsageData[]`，`configs: ProviderConfig[]`，`onToggleExpand: () => void`，`onToggleDimension: (providerId: string, dimensionId: string) => void`
+  - **渲染逻辑**（每个 provider 一个区块）：
+    1. **厂商标题行**：图标 + 名称 + 展开/折叠箭头图标(▼)
+    2. **维度列表**（provider 的每个 dimension 一行）：
+       - 复选框 checkbox（勾选/取消控制折叠态是否展示此维度）
+       - 维度名称（如 "每5小时 Token"）
+       - `<ProgressBar>` 进度条
+       - 百分比数字
+       - 重置时间
+    3. 厂商之间显示分隔线
+  - 点击标题行或非交互区域触发 `onToggleExpand`
+  - **复选框变更**：调用 `onToggleDimension(providerId, dimensionId)`
+  - **CSS**：
+    - 维度行比折叠行更紧凑，左边有缩进 `padding-left: 24px`
+    - checkbox 使用自定义样式（小圆角方框，选中后有主题色填充）
+    - 厂商区块之间的分隔线：`border-bottom: 1px solid var(--border-color)`
+- [ ] **验收标准**：
+  1. 展示所有厂商的所有维度
+  2. 复选框可以勾选/取消，状态正确反映
+  3. 点击非复选框区域可触发折叠回调
+
+### 2.4 实现 EdgeHandle 边缘把手组件
+
+- [ ] **操作**：编写 `src/renderer/components/EdgeHandle.tsx` 和 `EdgeHandle.css`
+  - **Props**：`side: 'left' | 'right' | 'top' | 'bottom'`，`onClick: () => void`
+  - **渲染**：一个窄条（`var(--handle-width)` 宽），包含一个箭头图标（CSS 三角形或 Unicode 字符 ▶/◀/▲/▼）
+  - **CSS**：
+    - 半透明背景 + 圆角
+    - 鼠标悬停时变亮
+    - cursor: pointer
+    - 高度与浮窗折叠态相同
+- [ ] **验收标准**：
+  1. 组件正确渲染为窄条
+  2. 箭头方向根据 side 参数正确显示
+  3. 点击可触发回调
+
+### 2.5 实现 FloatingWindow 浮窗主容器
+
+- [ ] **操作**：编写 `src/renderer/components/FloatingWindow.tsx` 和 `FloatingWindow.css`
+  - **职责**：组合 CollapsedView / ExpandedView / EdgeHandle
+  - **状态管理**：从 AppContext 读取 `isExpanded`、`windowState`
+  - **渲染逻辑**：
+    - 若 `windowState` 包含 'docked' → 渲染 `<EdgeHandle>`
+    - 若 `isExpanded === false` → 渲染 `<CollapsedView>`
+    - 若 `isExpanded === true` → 渲染 `<ExpandedView>`
+  - **拖拽实现**：
+    - 在容器上监听 `mousedown` 事件
+    - 使用 `mousemove` 计算位移量
+    - 通过 `window.electronAPI.setWindowPosition()` 更新窗口位置
+    - `mouseup` 时检测是否触碰屏幕边缘，如果是则调用 `window.electronAPI.setWindowState('docked-xxx')`
+    - **注意**：通过 `e.target` 判断，如果点击的是 checkbox，不触发拖拽
+  - **切换展开/折叠**：
+    - 调用 `window.electronAPI.resizeWindow()` 通知主进程调整窗口尺寸
+    - 折叠态高度 = 厂商数 × `var(--row-height)` + padding
+    - 展开态高度 = 所有维度行总数 × 行高 + 标题行 + 分隔线 + padding
+  - **CSS**：
+    - 毛玻璃效果：`backdrop-filter: blur(var(--blur-amount))`
+    - 背景：`background: var(--bg-primary)`
+    - 圆角：`border-radius: var(--border-radius)`
+    - 边框：`border: 1px solid var(--border-color)`
+    - 阴影：`box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3)`
+- [ ] **验收标准**：
+  1. 浮窗显示毛玻璃效果
+  2. 可以拖拽移动
+  3. 点击切换折叠/展开，窗口尺寸跟随变化
+  4. 拖拽到边缘时吸附，显示把手
+  5. 点击把手恢复正常位置
+
+### 2.6 实现 SettingsPanel 设置面板
+
+- [ ] **操作**：编写 `src/renderer/components/SettingsPanel.tsx` 和 `SettingsPanel.css`
+  - **布局**：
+    - 顶部标题 "设置"
+    - 厂商列表区域：展示已添加的厂商卡片
+    - "添加厂商" 按钮
+    - 底部：刷新频率下拉选择框（30s/60s/120s/300s）
+  - **厂商卡片**：
+    - 厂商图标 + 名称 + 状态标签（正常/错误/未配置）
+    - "编辑" 按钮 → 弹出认证信息输入表单
+    - "删除" 按钮 → 确认后删除
+  - **添加厂商弹窗**：
+    - 下拉选择厂商（从 providerRegistry 获取可用列表）
+    - 根据选中厂商动态渲染认证字段（由 provider.getAuthFields() 返回）
+    - "保存" 按钮 → 通过 IPC 保存到 configStore
+  - 所有配置变更通过 `window.electronAPI.setConfig()` 持久化
+  - **CSS**：深色主题，与浮窗风格一致但不使用毛玻璃（非透明窗口）
+- [ ] **验收标准**：
+  1. 设置面板可以从托盘菜单打开
+  2. 可以添加、编辑、删除厂商配置
+  3. 刷新频率可以修改
+  4. 设置保存后浮窗立即反映变更
+
+---
+
+## 阶段 3：厂商 Provider 开发
+
+> **前置依赖**：阶段 0.3（共享类型），阶段 1.4（IPC 框架）
+
+### 3.1 实现 Provider 注册中心
+
+- [ ] **操作**：编写 `src/renderer/providers/providerRegistry.ts`
+  - 创建 `providerRegistry: Map<string, IProvider>` 存储所有可用 Provider
+  - 导出 `registerProvider(provider: IProvider): void` — 注册新 Provider
+  - 导出 `getProvider(id: string): IProvider | undefined` — 获取 Provider
+  - 导出 `getAllProviders(): IProvider[]` — 获取所有已注册 Provider
+  - 在文件底部导入并自动注册所有 Provider（智谱、百炼）
+- [ ] **验收标准**：
+  1. `getAllProviders()` 返回已注册的 Provider 列表
+  2. `getProvider('zhipu')` 和 `getProvider('bailian')` 返回对应实例
+
+### 3.2 实现智谱 (GLM) Provider
+
+- [ ] **操作**：编写 `src/renderer/providers/zhipuProvider.ts`
+  - 实现 `IProvider` 接口
+  - `id`: `'zhipu'`，`name`: `'智谱 CodeGeeX'`
+  - `getAuthFields()` 返回：
+    ```typescript
+    [{ key: 'authToken', label: 'API Token', type: 'password', placeholder: '输入智谱 API Token (sk-...)', required: true }]
+    ```
+  - `fetchUsage(auth)` 实现（此函数的真正网络请求在主进程执行，这里只定义请求参数和解析逻辑）：
+    1. 构造请求参数：baseUrl = `https://open.bigmodel.cn`
+    2. 调用 `window.electronAPI.fetchUsage('zhipu')` 获取原始数据
+    3. **数据解析逻辑**（参考 `glm-usage-vscode` 的 `processData` 函数）：
+       - 从 `response.data.limits[]` 中提取：
+         - `type === 'TOKENS_LIMIT'` → 维度 `token_5h`（每5小时 Token 限流）
+         - `type === 'TIME_LIMIT'` → 维度 `mcp_monthly`（MCP 每月额度）
+       - 百分比计算：`(currentValue / usage) * 100`
+    4. 返回 `ProviderUsageData` 格式数据
+  - **注意**：实际 HTTP 请求在主进程 IPC 处理器中执行（参考阶段 4.1）
+- [ ] **验收标准**：
+  1. 接口实现完整，TypeScript 无报错
+  2. `getAuthFields()` 返回正确的字段列表
+  3. 数据解析逻辑与 `glm-usage-vscode` 的 `processData` 函数行为一致
+
+### 3.3 实现阿里云百炼 Provider（占位）
+
+- [ ] **操作**：编写 `src/renderer/providers/bailianProvider.ts`
+  - 实现 `IProvider` 接口
+  - `id`: `'bailian'`，`name`: `'阿里云百炼'`
+  - `getAuthFields()` 返回：
+    ```typescript
+    [{ key: 'cookie', label: 'Cookie', type: 'password', placeholder: '从浏览器复制百炼控制台的 Cookie', required: true }]
+    ```
+  - `fetchUsage(auth)` 当前返回 **Mock 数据**：
+    ```typescript
+    return {
+      providerId: 'bailian',
+      dimensions: [
+        { id: 'usage_5h', label: '近5小时用量', usedPercent: 6, used: 540, total: 9000, resetTime: '10:32:42', isChecked: true },
+        { id: 'usage_7d', label: '近一周用量', usedPercent: 25, used: 4500, total: 18000, resetTime: '03-23', isChecked: false },
+        { id: 'usage_30d', label: '近一月用量', usedPercent: 18, used: 3240, total: 18000, resetTime: '04-13', isChecked: false },
+      ],
+      lastUpdated: Date.now(),
+    };
+    ```
+  - 在代码中添加 `// TODO: 替换为真实 API 调用，待确认 API 端点和认证方式` 注释
+- [ ] **验收标准**：
+  1. Provider 可正常注册和调用
+  2. Mock 数据格式符合 `ProviderUsageData` 接口
+  3. 3 个维度数据正确展示在 UI 中
+
+---
+
+## 阶段 4：数据流与状态管理
+
+> **前置依赖**：阶段 1（主进程），阶段 2（UI 组件），阶段 3（Provider）
+
+### 4.1 实现主进程 API 请求处理
+
+- [ ] **操作**：在 `src/main/main.ts` 中完善 `usage:fetch` IPC 处理器
+  - 接收 `providerId` 和认证配置
+  - 根据 `providerId` 执行对应的 HTTP 请求：
+    - **智谱**：使用 Node.js `https` 模块（或 Electron `net.fetch`）请求 3 个 API 端点：
+      1. `GET {domain}/api/monitor/usage/quota/limit`（Authorization header 带 token）
+      2. `GET {domain}/api/monitor/usage/model-usage?startTime=...&endTime=...`
+      3. `GET {domain}/api/monitor/usage/tool-usage?startTime=...&endTime=...`
+      - 时间参数：startTime = 24小时前，endTime = 当前时间，格式：`YYYY-MM-DD HH:mm:ss`
+    - **百炼**：当前返回空数据（Mock 在 Provider 端）
+  - 将原始 JSON 响应返回给渲染进程
+  - 错误处理：网络错误、超时、认证失败等，统一返回 `{ error: '错误信息' }` 格式
+- [ ] **验收标准**：
+  1. 使用正确的智谱 Token 调用后，返回真实的配额数据
+  2. Token 无效时返回错误信息而非崩溃
+  3. 网络超时（默认 30s）后返回超时错误
+
+### 4.2 实现 AppContext 全局状态管理
+
+- [ ] **操作**：编写 `src/renderer/context/AppContext.tsx`
+  - 使用 `createContext` + `useReducer` 模式
+  - **State**：`AppState`（定义在 types.ts）
+  - **Actions**（reducer 处理的 action types）：
+    - `SET_CONFIG` — 更新配置
+    - `SET_USAGE_DATA` — 更新某个厂商的用量数据
+    - `SET_LOADING` — 设置加载状态
+    - `TOGGLE_EXPAND` — 切换折叠/展开
+    - `TOGGLE_DIMENSION` — 切换某个维度的 isChecked 状态
+    - `TOGGLE_SETTINGS` — 开关设置面板
+  - **Provider 组件**：
+    - 初始化时调用 `window.electronAPI.getConfig()` 加载配置
+    - 提供 `dispatch` 函数和 state 给子组件
+  - 导出 `useAppContext()` 自定义 hook
+- [ ] **验收标准**：
+  1. 子组件可以通过 `useAppContext()` 获取全局状态和 dispatch
+  2. dispatch 各 action 后状态正确更新
+  3. 配置变更后自动通过 IPC 持久化
+
+### 4.3 实现自动刷新 Hook
+
+- [ ] **操作**：编写 `src/renderer/hooks/useAutoRefresh.ts`
+  - 接收 `intervalSeconds: number` 参数
+  - 使用 `useEffect` + `setInterval` 实现定时轮询
+  - 每次轮询：
+    1. 遍历所有已启用的 provider
+    2. 调用 `window.electronAPI.fetchUsage(providerId)` 获取数据
+    3. dispatch `SET_USAGE_DATA` 更新状态
+  - 启动时立即执行一次
+  - 清理：组件卸载时清除 interval
+  - 支持手动触发刷新的回调 `refreshNow()`
+  - 实现指数退避：连续失败时增大间隔
+- [ ] **验收标准**：
+  1. 应用启动后自动获取数据
+  2. 每 N 秒自动刷新
+  3. 网络错误时不崩溃，保留最后成功数据
+  4. `refreshNow()` 调用后立即刷新
+
+### 4.4 组装 App.tsx 根组件
+
+- [ ] **操作**：修改 `src/renderer/App.tsx`
+  - 用 `<AppContextProvider>` 包裹
+  - 渲染 `<FloatingWindow />`
+  - 调用 `useAutoRefresh()` hook
+  - 监听 IPC 事件 `app:refresh`（托盘刷新）→ 调用 `refreshNow()`
+  - 监听 IPC 事件 `app:open-settings`（托盘设置）→ dispatch `TOGGLE_SETTINGS`
+- [ ] **验收标准**：
+  1. 应用启动后自动加载配置和数据
+  2. 浮窗正确显示各厂商的额度信息
+  3. 托盘菜单操作可触发对应功能
+
+---
+
+## 阶段 5：整合测试与修复
+
+> **前置依赖**：阶段 1-4 全部完成
+
+### 5.1 端对端功能测试
+
+- [ ] **测试清单**（逐项手动验证）：
+  1. ✅ 启动应用 → 显示浮窗 + 托盘图标
+  2. ✅ 未配置厂商时 → 浮窗显示提示"请配置厂商"
+  3. ✅ 从托盘打开设置 → 添加智谱厂商 → 输入 Token → 保存
+  4. ✅ 浮窗显示智谱的折叠态数据
+  5. ✅ 点击浮窗 → 展开显示所有维度
+  6. ✅ 再次点击 → 折叠回一行
+  7. ✅ 勾选/取消维度 → 折叠态显示内容正确变化
+  8. ✅ 拖拽浮窗 → 可自由移动
+  9. ✅ 拖拽到屏幕右边缘 → 自动吸附
+  10. ✅ 点击边缘把手 → 恢复正常位置
+  11. ✅ 添加阿里云百炼厂商 → Mock 数据正确显示
+  12. ✅ 修改刷新频率 → 定时器间隔变更
+  13. ✅ 关闭浮窗 → 托盘仍在，点击托盘可重新打开
+  14. ✅ 退出应用 → 完全关闭
+  15. ✅ 重启应用 → 窗口位置、配置、勾选状态恢复
+
+### 5.2 错误状态验证
+
+- [ ] **测试清单**：
+  1. 输入无效 Token → 显示错误状态，不崩溃
+  2. 断网 → 保留最后成功数据 + 显示错误标识
+  3. API 返回异常数据 → 优雅降级
+
+### 5.3 视觉检查
+
+- [ ] **测试清单**：
+  1. 毛玻璃效果正常显示
+  2. 进度条颜色渐变正确
+  3. 动画过渡流畅
+  4. 文字清晰可读
+  5. 暗色主题一致
+  6. 边缘吸附过渡自然
+
+---
+
+## 阶段 6：打包与发布
+
+> **前置依赖**：阶段 5 测试全部通过
+
+### 6.1 配置 electron-builder
+
+- [ ] **操作**：创建/修改 `electron-builder.yml`
+  ```yaml
+  appId: com.codingplan.usagetracker
+  productName: Coding Plan Usage Tracker
+  directories:
+    output: dist
+  win:
+    target:
+      - target: nsis
+        arch: [x64]
+    icon: resources/icons/app-icon.png
+  nsis:
+    oneClick: false
+    allowToChangeInstallationDirectory: true
+    createDesktopShortcut: true
+    createStartMenuShortcut: true
+  ```
+- [ ] **验收标准**：配置文件无语法错误
+
+### 6.2 生成应用图标
+
+- [ ] **操作**：
+  1. 创建 256x256 的应用图标 PNG（可使用 AI 工具生成）
+  2. 保存为 `resources/icons/app-icon.png`
+  3. 创建 16x16 的托盘图标 `resources/icons/tray-icon.png`
+  4. 创建各厂商图标 16x16：`zhipu.png`、`bailian.png`
+- [ ] **验收标准**：图标文件存在且尺寸正确
+
+### 6.3 构建安装包
+
+- [ ] **操作**：
+  ```bash
+  npm run build
+  ```
+  如果 package.json 中未配置 build 命令，则执行：
+  ```bash
+  npx electron-builder --win
+  ```
+- [ ] **验收标准**：
+  1. `dist/` 目录下生成 `.exe` 安装包
+  2. 安装后运行正常
+  3. 系统托盘图标正常显示
+
+### 6.4 发布到 GitHub
+
+- [ ] **操作**：
+  1. 编写 `README.md`（包含项目简介、截图、安装方式、使用说明、厂商配置指南）
+  2. 创建 GitHub Release，上传安装包
+  3. 更新 `docs/Changelog.md`
+- [ ] **验收标准**：
+  1. README 内容完整
+  2. GitHub Release 中包含安装包下载链接
+  3. Changelog 记录了 v0.1.0 的所有功能
