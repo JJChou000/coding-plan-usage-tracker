@@ -8,10 +8,10 @@
 
 | # | 任务 | 状态 | 备注 |
 |---|---|---|---|
-| 1 | 获取智谱 API Token | ⬜ 未完成 | |
-| 2 | 调研阿里云百炼 API | ⬜ 未完成 | 需要抓包 |
-| 3 | 准备应用图标 | ⬜ 未完成 | 可用 AI 生成 |
-| 4 | 在 GitHub 创建仓库 | ⬜ 未完成 | |
+| 1 | 获取智谱 API Token | ✅ 已完成 | |
+| 2 | 调研阿里云百炼 API | 🔄 进行中 | 见下方最新操作步骤 |
+| 3 | 准备应用图标 | ✅ 已完成 | 已选用编号7（火箭），保存至 `resources/icons/app-icon.png` |
+| 4 | 在 GitHub 创建仓库 | ✅ 已完成 | [JJChou000/coding-plan-usage-tracker](https://github.com/JJChou000/coding-plan-usage-tracker) |
 
 ---
 
@@ -39,32 +39,19 @@
 
 阿里云百炼的 Coding Plan 用量页面目前没有已知的公开 API。我们需要你帮忙用浏览器抓包，找出页面加载数据时调用的后端接口。
 
-### 操作步骤
+### 当前分析结论
 
-1. 打开 Chrome/Edge 浏览器
-2. 按 `F12` 打开开发者工具
-3. 切换到 **Network（网络）** 标签页
-4. ✅ **确保已勾选** "Preserve log"（保留日志）选项
-5. 在筛选器中选择 **"All"**（全部），而非 "Fetch/XHR"
-6. **此时刷新页面**（按 F5 或 Ctrl+R），访问 [百炼 Coding Plan 页面](https://bailian.console.aliyun.com/cn-beijing/#/efm/coding-plan-detail)
-7. 等待页面完全加载，观察 Network 面板中出现的请求
-8. **搜索关键词**：在 Filter 输入框中输入 `usage` 或 `quota` 或 `coding-plan`，查找可能包含用量数据的请求
-9. 找到后点击该请求，查看：
-   - **Request URL**（请求地址）
-   - **Request Headers**（请求头，特别是 Cookie 或 Authorization）
-   - **Response**（响应数据，确认包含用量百分比信息）
-10. 将这些信息截图或复制给 AI
+> 🔍 **已排除 SSR**：页面 HTML 中无用量数据。说明这是纯客户端 SPA，数据在页面 JS 加载完毕后由后台 API 异步填充。之前看不到 Fetch/XHR 请求是因为 DevTools 打开太晚。
 
-> 💡 **提示**：之前你截图时 Fetch/XHR 显示 0 个请求，可能是因为打开 DevTools 时页面已经加载完毕。**必须先打开 Network 标签页，然后再刷新页面**，才能捕获到请求。
+### 最新操作步骤（必须按顺序）
 
-### 备选方案
-
-如果使用上述步骤仍然找不到 API 请求（数据可能是 SSR 服务端渲染嵌入 HTML 中），请执行以下操作：
-
-1. 在 Network 标签页，找到第一个文档请求（Type 为 `document`）
-2. 点击该请求，切换到 **Response** 标签页
-3. 按 `Ctrl+F` 搜索关键词如 `5小时` 或 `用量` 或 `percent`
-4. 截图搜索结果
+1. 打开 [百炼 Coding Plan 页面](https://bailian.console.aliyun.com/cn-beijing/#/efm/coding-plan-detail)
+2. 等页面**完全加载**显示出用量数据（6%、25%、18%）
+3. **此时再**按 `F12` 打开 DevTools → Network 标签页
+4. 筛选器选 **Fetch/XHR**
+5. **点击页面右上角的「刷新」按钮**（即页面中「最后统计时间」旁边的刷新图标 🔄），不要按 F5
+6. 观察 Network 中新出现的请求
+7. 找到包含用量数据的请求，点击查看 URL、请求头和响应，截图给 AI
 
 ---
 
