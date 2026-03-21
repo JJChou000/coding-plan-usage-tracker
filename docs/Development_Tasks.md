@@ -341,6 +341,8 @@
 
 > **前置依赖**：阶段 0.3（共享类型），阶段 1.4（IPC 框架）
 
+- [x] **验收记录**：2026-03-21 已完成阶段 3 验收，详见 `docs/Stage3_Acceptance_Report.md`
+
 ### 3.1 实现 Provider 注册中心
 
 - [x] **操作**：编写 `src/renderer/providers/providerRegistry.ts`
@@ -355,7 +357,7 @@
 
 ### 3.2 实现智谱 (GLM) Provider
 
-- [ ] **操作**：编写 `src/renderer/providers/zhipuProvider.ts`
+- [x] **操作**：编写 `src/renderer/providers/zhipuProvider.ts`
   - 实现 `IProvider` 接口
   - `id`: `'zhipu'`，`name`: `'智谱 CodeGeeX'`
   - `getAuthFields()` 返回：
@@ -380,7 +382,7 @@
        - 百分比计算：`(currentValue / usage) * 100`
     4. 返回 `ProviderUsageData` 格式数据
   - **注意**：实际 HTTP 请求在主进程 IPC 处理器中执行（参考阶段 4.1）
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 接口实现完整，TypeScript 无报错
   2. `getAuthFields()` 返回正确的字段列表
   3. 数据解析逻辑与 `glm-usage-vscode` 的 `processData` 函数行为一致

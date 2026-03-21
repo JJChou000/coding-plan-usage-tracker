@@ -63,7 +63,8 @@ const appConfigSchema: Schema<AppConfig> = {
 }
 
 const ElectronStore =
-  (ElectronStoreModule as unknown as { default?: typeof ElectronStoreModule }).default ?? ElectronStoreModule
+  (ElectronStoreModule as unknown as { default?: typeof ElectronStoreModule }).default ??
+  ElectronStoreModule
 
 const configStore = new ElectronStore<AppConfig>({
   schema: appConfigSchema,

@@ -29,8 +29,11 @@ const WINDOW_WIDTH = 320
 const COLLAPSED_ROW_HEIGHT = 36
 const EXPANDED_HEADER_HEIGHT = 36
 const EXPANDED_DIMENSION_HEIGHT = 30
+const EXPANDED_SECTION_PADDING_TOP = 6
+const EXPANDED_SECTION_PADDING_BOTTOM = 8
+const EXPANDED_SECTION_GAP = 6
+const EXPANDED_DIMENSION_GAP = 4
 const WINDOW_PADDING = 16
-const WINDOW_GAP = 8
 const SECTION_DIVIDER_HEIGHT = 1
 const DOCK_THRESHOLD = 20
 const HANDLE_WIDTH = 24
@@ -60,8 +63,16 @@ function getExpandedHeight(providers: ProviderUsageData[]): number {
   }
 
   const contentHeight = providers.reduce((total, provider, index) => {
+    const dimensionCount = provider.dimensions.length
+    const dimensionsHeight =
+      dimensionCount * EXPANDED_DIMENSION_HEIGHT +
+      Math.max(0, dimensionCount - 1) * EXPANDED_DIMENSION_GAP
     const providerHeight =
-      EXPANDED_HEADER_HEIGHT + provider.dimensions.length * EXPANDED_DIMENSION_HEIGHT + WINDOW_GAP
+      EXPANDED_SECTION_PADDING_TOP +
+      EXPANDED_HEADER_HEIGHT +
+      EXPANDED_SECTION_GAP +
+      dimensionsHeight +
+      EXPANDED_SECTION_PADDING_BOTTOM
 
     return total + providerHeight + (index < providers.length - 1 ? SECTION_DIVIDER_HEIGHT : 0)
   }, 0)
