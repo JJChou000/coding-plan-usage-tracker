@@ -79,7 +79,8 @@ function CollapsedView({
       {
         providerId: provider.providerId,
         providerMeta: getProviderMeta(provider.providerId),
-        primaryDimension
+        primaryDimension,
+        error: provider.error
       }
     ]
   })
@@ -90,13 +91,17 @@ function CollapsedView({
 
   return (
     <div className="collapsed-view">
-      {rows.map(({ providerId, providerMeta, primaryDimension }) => (
+      {rows.map(({ providerId, providerMeta, primaryDimension, error }) => (
         <button
           key={providerId}
           type="button"
-          className="collapsed-view__row"
+          className={`collapsed-view__row${error ? ' collapsed-view__row--error' : ''}`}
           onClick={onToggleExpand}
-          aria-label={`展开 ${providerMeta.name} 详情`}
+          aria-label={
+            error
+              ? `展开 ${providerMeta.name} 详情，当前错误：${error}`
+              : `展开 ${providerMeta.name} 详情`
+          }
         >
           <span className="collapsed-view__identity">
             <span className="collapsed-view__icon" aria-hidden="true">
@@ -123,6 +128,12 @@ function CollapsedView({
               {Math.round(primaryDimension.usedPercent)}%
             </strong>
           </span>
+
+          {error ? (
+            <span className="collapsed-view__status collapsed-view__status--error" title={error}>
+              错误
+            </span>
+          ) : null}
 
           {primaryDimension.resetTime ? (
             <span className="collapsed-view__reset">⏱ {primaryDimension.resetTime}</span>

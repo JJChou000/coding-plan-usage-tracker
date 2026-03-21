@@ -43,10 +43,18 @@
   color: var(--text-primary);
 }
 
+.floating-window__placeholder--error strong {
+  color: #fda4af;
+}
+
 .floating-window__placeholder span {
   color: var(--text-secondary);
   font-size: 11px;
   line-height: 1.4;
+}
+
+.floating-window__placeholder--error span:first-of-type {
+  color: var(--text-primary);
 }
 
 .floating-window__handle {

@@ -26,6 +26,10 @@
   background: var(--bg-hover);
 }
 
+.collapsed-view__row--error {
+  border: 1px solid rgba(244, 63, 94, 0.22);
+}
+
 .collapsed-view__row:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.16);
   background: var(--bg-hover);
@@ -81,6 +85,21 @@
   font-size: 12px;
   font-weight: 600;
   text-align: right;
+}
+
+.collapsed-view__status {
+  flex-shrink: 0;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.collapsed-view__status--error {
+  color: #fecdd3;
+  background: rgba(190, 24, 93, 0.24);
+  border: 1px solid rgba(251, 113, 133, 0.28);
 }
 
 .collapsed-view__reset {

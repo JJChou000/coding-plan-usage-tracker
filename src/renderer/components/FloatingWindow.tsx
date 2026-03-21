@@ -14,6 +14,12 @@ type PreviewPosition = {
   y: number
 }
 
+type ProviderErrorSummary = {
+  providerId: string
+  providerName: string
+  message: string
+}
+
 type DragState = {
   active: boolean
   startClientX: number
@@ -38,6 +44,7 @@ const SECTION_DIVIDER_HEIGHT = 1
 const DOCK_THRESHOLD = 20
 const HANDLE_WIDTH = 24
 const DRAG_THRESHOLD = 4
+const ERROR_PLACEHOLDER_MIN_HEIGHT = 104
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
@@ -53,8 +60,49 @@ function getEnabledProviders(
     .filter((provider): provider is ProviderUsageData => Boolean(provider))
 }
 
-function getCollapsedHeight(providerCount: number): number {
-  return Math.max(COLLAPSED_ROW_HEIGHT, providerCount * COLLAPSED_ROW_HEIGHT) + WINDOW_PADDING
+function getProviderDisplayName(providerId: string): string {
+  switch (providerId) {
+    case 'zhipu':
+      return '智谱'
+    case 'bailian':
+      return '百炼'
+    default:
+      return providerId
+  }
+}
+
+function getProviderErrors(
+  configs: AppConfig['providers'],
+  usageData: Map<string, ProviderUsageData>
+): ProviderErrorSummary[] {
+  return configs
+    .filter((config) => config.enabled)
+    .flatMap((config) => {
+      const message = usageData.get(config.providerId)?.error?.trim()
+
+      if (!message) {
+        return []
+      }
+
+      return [
+        {
+          providerId: config.providerId,
+          providerName: getProviderDisplayName(config.providerId),
+          message
+        }
+      ]
+    })
+}
+
+function getCollapsedHeight(providerCount: number, errorSummaryCount = 0): number {
+  const baseHeight =
+    Math.max(COLLAPSED_ROW_HEIGHT, providerCount * COLLAPSED_ROW_HEIGHT) + WINDOW_PADDING
+
+  if (errorSummaryCount === 0) {
+    return baseHeight
+  }
+
+  return Math.max(baseHeight, ERROR_PLACEHOLDER_MIN_HEIGHT)
 }
 
 function getExpandedHeight(providers: ProviderUsageData[]): number {
@@ -91,9 +139,10 @@ function getDockSide(windowState: AppConfig['windowState']): DockState | null {
 function getFloatingSize(
   isExpanded: boolean,
   windowState: AppConfig['windowState'],
-  providers: ProviderUsageData[]
+  providers: ProviderUsageData[],
+  placeholderErrorCount = 0
 ): { width: number; height: number; handleLength: number } {
-  const collapsedHeight = getCollapsedHeight(providers.length || 1)
+  const collapsedHeight = getCollapsedHeight(providers.length || 1, placeholderErrorCount)
   const expandedHeight = getExpandedHeight(providers)
   const handleLength = collapsedHeight
 
@@ -233,13 +282,25 @@ function FloatingWindow(): React.JSX.Element {
   )
 
   const enabledConfigs = state.config.providers.filter((config) => config.enabled)
-  const providers = getEnabledProviders(state.config.providers, state.usageData)
-  const currentSize = getFloatingSize(state.config.isExpanded, state.config.windowState, providers)
+  const providerStates = getEnabledProviders(state.config.providers, state.usageData)
+  const providers = providerStates.filter((provider) => provider.dimensions.length > 0)
+  const hasVisibleProviders = providers.length > 0
+  const providerErrors = getProviderErrors(state.config.providers, state.usageData)
+  const currentSize = getFloatingSize(
+    state.config.isExpanded,
+    state.config.windowState,
+    providers,
+    hasVisibleProviders ? 0 : providerErrors.length
+  )
   const isDocked = state.config.windowState !== 'normal'
   const dockSide = getDockSide(state.config.windowState)
   const previewMode = typeof window.electronAPI?.resizeWindow !== 'function'
   const hasConfiguredProviders = enabledConfigs.length > 0
-  const hasVisibleProviders = providers.length > 0
+  const primaryProviderError = providerErrors[0]
+  const errorPlaceholderHint =
+    providerErrors.length > 1
+      ? `另有 ${providerErrors.length - 1} 个厂商也出现错误，请从托盘打开“设置”查看详情。`
+      : '请从托盘打开“设置”检查认证信息，或稍后手动刷新一次。'
 
   useEffect(() => {
     if (previewMode) {
@@ -497,13 +558,27 @@ function FloatingWindow(): React.JSX.Element {
               <span>从系统托盘打开“设置”，添加一个已启用的厂商配置。</span>
             </div>
           ) : !hasVisibleProviders ? (
-            <div className="floating-window__placeholder">
-              <strong>{state.isLoading ? '正在加载额度数据…' : '暂时没有可显示的数据'}</strong>
+            <div
+              className={`floating-window__placeholder${
+                primaryProviderError ? ' floating-window__placeholder--error' : ''
+              }`}
+              role={primaryProviderError ? 'status' : undefined}
+            >
+              <strong>
+                {primaryProviderError
+                  ? '额度刷新失败'
+                  : state.isLoading
+                    ? '正在加载额度数据…'
+                    : '暂时没有可显示的数据'}
+              </strong>
               <span>
-                {state.isLoading
-                  ? '稍等几秒，浮窗会自动刷新。'
-                  : '请检查认证信息是否已填写，或从托盘手动刷新一次。'}
+                {primaryProviderError
+                  ? `${primaryProviderError.providerName}：${primaryProviderError.message}`
+                  : state.isLoading
+                    ? '稍等几秒，浮窗会自动刷新。'
+                    : '请检查认证信息是否已填写，或从托盘手动刷新一次。'}
               </span>
+              {primaryProviderError ? <span>{errorPlaceholderHint}</span> : null}
             </div>
           ) : (
             <>

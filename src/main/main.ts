@@ -22,7 +22,11 @@ let resizeListenerRegistered = false
 const REQUEST_TIMEOUT_MS = 30_000
 const ZHIPU_DOMAIN = 'https://open.bigmodel.cn'
 const isE2EMode = process.env['CODING_PLAN_USAGE_TRACKER_E2E'] === '1'
-const useZhipuFixture = process.env['CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU'] === '1'
+const useZhipuFixture =
+  process.env['CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU'] === '1' ||
+  typeof process.env['CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU_MODE'] === 'string'
+
+type ZhipuFixtureMode = 'success' | 'auth-error' | 'offline' | 'malformed'
 
 type UsageFetchAuthConfig = Record<string, string>
 
@@ -40,6 +44,22 @@ type UsageFetchResponse =
   | {
       error: string
     }
+
+function resolveZhipuFixtureMode(value: unknown): ZhipuFixtureMode {
+  switch (value) {
+    case 'auth-error':
+    case 'offline':
+    case 'malformed':
+      return value
+    case 'success':
+    default:
+      return 'success'
+  }
+}
+
+let zhipuFixtureMode = resolveZhipuFixtureMode(
+  process.env['CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU_MODE']
+)
 
 class HttpRequestError extends Error {
   constructor(
@@ -290,6 +310,65 @@ function formatUsageFetchError(providerId: string, error: unknown): string {
   return `${providerLabel} API 请求失败。`
 }
 
+function createZhipuSuccessFixtureResponse(): UsageFetchResponse {
+  return {
+    providerId: 'zhipu',
+    quotaLimit: {
+      data: {
+        limits: [
+          {
+            type: 'TOKENS_LIMIT',
+            usage: 200000,
+            currentValue: 62000,
+            nextResetTime: Date.now() + 2 * 60 * 60 * 1000
+          },
+          {
+            type: 'TIME_LIMIT',
+            usage: 2000,
+            currentValue: 240,
+            nextResetTime: Date.now() + 6 * 24 * 60 * 60 * 1000
+          }
+        ]
+      }
+    },
+    modelUsage: { data: [] },
+    toolUsage: { data: [] }
+  }
+}
+
+function createZhipuFixtureResponse(): UsageFetchResponse {
+  switch (zhipuFixtureMode) {
+    case 'auth-error':
+      return {
+        error: '智谱 认证失败，请检查 Token。'
+      }
+    case 'offline':
+      return {
+        error: '智谱网络连接失败，请检查网络连接。'
+      }
+    case 'malformed':
+      return {
+        providerId: 'zhipu',
+        quotaLimit: {
+          data: {
+            limits: [
+              {
+                type: 'UNKNOWN_LIMIT',
+                usage: 'not-a-number',
+                currentValue: null
+              }
+            ]
+          }
+        },
+        modelUsage: { data: [] },
+        toolUsage: { data: [] }
+      }
+    case 'success':
+    default:
+      return createZhipuSuccessFixtureResponse()
+  }
+}
+
 async function fetchZhipuUsage(authConfig: UsageFetchAuthConfig): Promise<UsageFetchResponse> {
   const authToken = authConfig.authToken?.trim() ?? ''
 
@@ -300,29 +379,7 @@ async function fetchZhipuUsage(authConfig: UsageFetchAuthConfig): Promise<UsageF
   }
 
   if (useZhipuFixture) {
-    return {
-      providerId: 'zhipu',
-      quotaLimit: {
-        data: {
-          limits: [
-            {
-              type: 'TOKENS_LIMIT',
-              usage: 200000,
-              currentValue: 62000,
-              nextResetTime: Date.now() + 2 * 60 * 60 * 1000
-            },
-            {
-              type: 'TIME_LIMIT',
-              usage: 2000,
-              currentValue: 240,
-              nextResetTime: Date.now() + 6 * 24 * 60 * 60 * 1000
-            }
-          ]
-        }
-      },
-      modelUsage: { data: [] },
-      toolUsage: { data: [] }
-    }
+    return createZhipuFixtureResponse()
   }
 
   const urls = buildZhipuUsageUrls(ZHIPU_DOMAIN)
@@ -361,8 +418,12 @@ function registerE2EDebugApi(): void {
       settingsWindowCount: BrowserWindow.getAllWindows().filter(
         (window) => !window.isDestroyed() && window.getTitle() === 'Coding Plan Usage Tracker - 设置'
       ).length,
-      config: getConfig()
+      config: getConfig(),
+      zhipuFixtureMode
     }),
+    setZhipuFixtureMode: (mode: unknown) => {
+      zhipuFixtureMode = resolveZhipuFixtureMode(mode)
+    },
     openSettingsFromTray: () => {
       openSettingsFromTray()
     },

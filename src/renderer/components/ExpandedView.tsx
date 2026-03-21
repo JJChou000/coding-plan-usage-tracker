@@ -97,7 +97,11 @@ function ExpandedView({
             type="button"
             className="expanded-view__header"
             onClick={onToggleExpand}
-            aria-label={`折叠 ${providerMeta.name}`}
+            aria-label={
+              provider.error
+                ? `折叠 ${providerMeta.name}，当前错误：${provider.error}`
+                : `折叠 ${providerMeta.name}`
+            }
           >
             <span className="expanded-view__title">
               <span className="expanded-view__icon" aria-hidden="true">
@@ -113,11 +117,21 @@ function ExpandedView({
                   providerMeta.icon
                 )}
               </span>
-              <span className="expanded-view__name">{providerMeta.name}</span>
-            </span>
-            <span className="expanded-view__chevron" aria-hidden="true">
-              ▼
-            </span>
+                <span className="expanded-view__name">{providerMeta.name}</span>
+              </span>
+              <span className="expanded-view__header-meta">
+                {provider.error ? (
+                  <span
+                    className="expanded-view__status expanded-view__status--error"
+                    title={provider.error}
+                  >
+                    错误
+                  </span>
+                ) : null}
+                <span className="expanded-view__chevron" aria-hidden="true">
+                  ▼
+                </span>
+              </span>
           </button>
 
           <div className="expanded-view__dimensions">
