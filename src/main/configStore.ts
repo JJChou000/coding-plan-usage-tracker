@@ -1,4 +1,8 @@
+import { mkdirSync } from 'node:fs'
+import { resolve } from 'node:path'
+
 import ElectronStoreModule, { type Schema } from 'electron-store'
+import { app } from 'electron'
 
 import type { AppConfig, ProviderConfig } from '../shared/types'
 
@@ -65,6 +69,15 @@ const appConfigSchema: Schema<AppConfig> = {
 const ElectronStore =
   (ElectronStoreModule as unknown as { default?: typeof ElectronStoreModule }).default ??
   ElectronStoreModule
+
+const userDataOverride = process.env['CODING_PLAN_USAGE_TRACKER_USER_DATA_DIR']?.trim()
+
+if (userDataOverride) {
+  const resolvedUserDataPath = resolve(userDataOverride)
+
+  mkdirSync(resolvedUserDataPath, { recursive: true })
+  app.setPath('userData', resolvedUserDataPath)
+}
 
 const configStore = new ElectronStore<AppConfig>({
   schema: appConfigSchema,

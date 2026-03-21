@@ -2,6 +2,8 @@ import { app, Menu, Tray, nativeImage, type BrowserWindow, type NativeImage } fr
 import { join } from 'path'
 
 import { createSettingsWindow } from './window'
+import { getConfig } from './configStore'
+import { ensureFloatingWindowVisible } from './window'
 
 let tray: Tray | null = null
 
@@ -21,38 +23,65 @@ function loadTrayIcon(): NativeImage {
   return icon.resize({ width: 16, height: 16 })
 }
 
+export function refreshFromTray(mainWindow: BrowserWindow | null): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  mainWindow.webContents.send('app:refresh')
+}
+
+export function openSettingsFromTray(): BrowserWindow {
+  const settingsWindow = createSettingsWindow()
+  const notifyOpenSettings = (): void => {
+    if (settingsWindow.isDestroyed()) {
+      return
+    }
+
+    settingsWindow.webContents.send('app:open-settings')
+  }
+
+  if (settingsWindow.webContents.isLoadingMainFrame()) {
+    settingsWindow.webContents.once('did-finish-load', notifyOpenSettings)
+  } else {
+    notifyOpenSettings()
+  }
+
+  return settingsWindow
+}
+
+export function showMainWindowFromTray(mainWindow: BrowserWindow | null): void {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return
+  }
+
+  const { windowState } = getConfig()
+
+  ensureFloatingWindowVisible(mainWindow, windowState)
+
+  if (!mainWindow.isVisible()) {
+    mainWindow.show()
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore()
+  }
+
+  mainWindow.focus()
+}
+
 function buildTrayMenu(getMainWindow: () => BrowserWindow | null): Electron.Menu {
   return Menu.buildFromTemplate([
     {
       label: '刷新数据',
       click: () => {
-        const mainWindow = getMainWindow()
-
-        if (!mainWindow || mainWindow.isDestroyed()) {
-          return
-        }
-
-        mainWindow.webContents.send('app:refresh')
+        refreshFromTray(getMainWindow())
       }
     },
     {
       label: '设置',
       click: () => {
-        const settingsWindow = createSettingsWindow()
-        const notifyOpenSettings = (): void => {
-          if (settingsWindow.isDestroyed()) {
-            return
-          }
-
-          settingsWindow.webContents.send('app:open-settings')
-        }
-
-        if (settingsWindow.webContents.isLoadingMainFrame()) {
-          settingsWindow.webContents.once('did-finish-load', notifyOpenSettings)
-          return
-        }
-
-        notifyOpenSettings()
+        openSettingsFromTray()
       }
     },
     { type: 'separator' },
@@ -76,21 +105,7 @@ export function createTray(getMainWindow: () => BrowserWindow | null): Tray {
   tray.setContextMenu(buildTrayMenu(getMainWindow))
 
   tray.on('click', () => {
-    const mainWindow = getMainWindow()
-
-    if (!mainWindow || mainWindow.isDestroyed()) {
-      return
-    }
-
-    if (!mainWindow.isVisible()) {
-      mainWindow.show()
-    }
-
-    if (mainWindow.isMinimized()) {
-      mainWindow.restore()
-    }
-
-    mainWindow.focus()
+    showMainWindowFromTray(getMainWindow())
   })
 
   return tray

@@ -45,6 +45,23 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
 }
 
+function getWorkAreaForPoint(point: { x: number; y: number }): Electron.Rectangle {
+  return screen.getDisplayNearestPoint(point).workArea
+}
+
+function getClampedPosition(
+  bounds: Pick<Electron.Rectangle, 'x' | 'y' | 'width' | 'height'>,
+  workArea: Electron.Rectangle
+): { x: number; y: number } {
+  const maxX = workArea.x + workArea.width - bounds.width
+  const maxY = workArea.y + workArea.height - bounds.height
+
+  return {
+    x: clamp(bounds.x, workArea.x, maxX),
+    y: clamp(bounds.y, workArea.y, maxY)
+  }
+}
+
 function getPreloadPath(): string {
   return join(__dirname, '../preload/index.js')
 }
@@ -101,12 +118,11 @@ function getDisplayWorkArea(win: BrowserWindow): Electron.Rectangle {
   return screen.getDisplayMatching(win.getBounds()).workArea
 }
 
-function getDockedPosition(
-  win: BrowserWindow,
-  nextState: Exclude<AppConfig['windowState'], 'normal'>
+function getDockedPositionForBounds(
+  bounds: Pick<Electron.Rectangle, 'x' | 'y' | 'width' | 'height'>,
+  nextState: Exclude<AppConfig['windowState'], 'normal'>,
+  workArea: Electron.Rectangle
 ): { x: number; y: number } {
-  const bounds = win.getBounds()
-  const workArea = getDisplayWorkArea(win)
   const maxX = workArea.x + workArea.width - bounds.width
   const maxY = workArea.y + workArea.height - bounds.height
 
@@ -134,42 +150,85 @@ function getDockedPosition(
   }
 }
 
+function getSanitizedFloatingWindowPosition(
+  config: AppConfig,
+  size: { width: number; height: number } = {
+    width: FLOATING_WINDOW_WIDTH,
+    height: FLOATING_WINDOW_HEIGHT
+  }
+): { x: number; y: number } {
+  const bounds = {
+    x: config.windowPosition.x,
+    y: config.windowPosition.y,
+    width: size.width,
+    height: size.height
+  }
+  const workArea = getWorkAreaForPoint(config.windowPosition)
+
+  if (config.windowState === 'normal') {
+    return getClampedPosition(bounds, workArea)
+  }
+
+  return getDockedPositionForBounds(bounds, config.windowState, workArea)
+}
+
 function getRestoredPosition(win: BrowserWindow): { x: number; y: number } {
   const bounds = win.getBounds()
   const workArea = getDisplayWorkArea(win)
-  const maxX = workArea.x + workArea.width - bounds.width
-  const maxY = workArea.y + workArea.height - bounds.height
+  const clampedPosition = getClampedPosition(bounds, workArea)
 
   if (bounds.x < workArea.x + EDGE_DOCK_THRESHOLD) {
-    return { x: workArea.x, y: clamp(bounds.y, workArea.y, maxY) }
+    return { x: workArea.x, y: clampedPosition.y }
   }
 
   if (bounds.x + bounds.width > workArea.x + workArea.width - EDGE_DOCK_THRESHOLD) {
-    return { x: maxX, y: clamp(bounds.y, workArea.y, maxY) }
+    return {
+      x: workArea.x + workArea.width - bounds.width,
+      y: clampedPosition.y
+    }
   }
 
   if (bounds.y < workArea.y + EDGE_DOCK_THRESHOLD) {
-    return { x: clamp(bounds.x, workArea.x, maxX), y: workArea.y }
+    return { x: clampedPosition.x, y: workArea.y }
   }
 
   if (bounds.y + bounds.height > workArea.y + workArea.height - EDGE_DOCK_THRESHOLD) {
-    return { x: clamp(bounds.x, workArea.x, maxX), y: maxY }
+    return {
+      x: clampedPosition.x,
+      y: workArea.y + workArea.height - bounds.height
+    }
   }
 
-  return {
-    x: clamp(bounds.x, workArea.x, maxX),
-    y: clamp(bounds.y, workArea.y, maxY)
+  return clampedPosition
+}
+
+export function ensureFloatingWindowVisible(
+  win: BrowserWindow,
+  windowState: AppConfig['windowState'] = 'normal'
+): { x: number; y: number } {
+  const currentBounds = win.getBounds()
+  const workArea = getDisplayWorkArea(win)
+  const targetPosition =
+    windowState === 'normal'
+      ? getClampedPosition(currentBounds, workArea)
+      : getDockedPositionForBounds(currentBounds, windowState, workArea)
+
+  if (currentBounds.x !== targetPosition.x || currentBounds.y !== targetPosition.y) {
+    win.setPosition(targetPosition.x, targetPosition.y)
   }
+
+  return targetPosition
 }
 
 export function createFloatingWindow(): BrowserWindow {
   const config = getConfig()
+  const initialPosition = getSanitizedFloatingWindowPosition(config)
 
   const win = new BrowserWindow({
     width: FLOATING_WINDOW_WIDTH,
     height: FLOATING_WINDOW_HEIGHT,
-    x: config.windowPosition.x,
-    y: config.windowPosition.y,
+    x: initialPosition.x,
+    y: initialPosition.y,
     show: false,
     frame: false,
     transparent: true,
@@ -187,6 +246,15 @@ export function createFloatingWindow(): BrowserWindow {
 
   floatingWindow = win
   attachExternalLinkHandler(win)
+
+  if (
+    initialPosition.x !== config.windowPosition.x ||
+    initialPosition.y !== config.windowPosition.y
+  ) {
+    setConfig({
+      windowPosition: initialPosition
+    })
+  }
 
   win.on('ready-to-show', () => {
     win.show()
@@ -280,7 +348,11 @@ export function setupEdgeDocking(win: BrowserWindow): void {
     const targetPosition =
       nextState === 'normal'
         ? getRestoredPosition(floatingWindow)
-        : getDockedPosition(floatingWindow, nextState)
+        : getDockedPositionForBounds(
+            floatingWindow.getBounds(),
+            nextState,
+            getDisplayWorkArea(floatingWindow)
+          )
 
     animateWindowPosition(floatingWindow, targetPosition.x, targetPosition.y)
     setConfig({

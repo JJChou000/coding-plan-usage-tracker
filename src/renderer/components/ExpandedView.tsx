@@ -1,4 +1,4 @@
-import type { KeyboardEvent } from 'react'
+import type { KeyboardEvent, MouseEvent } from 'react'
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 
@@ -48,6 +48,10 @@ function handleKeyboardToggle(event: KeyboardEvent<HTMLElement>, onToggleExpand:
 
   event.preventDefault()
   onToggleExpand()
+}
+
+function stopInteractionPropagation(event: MouseEvent<HTMLElement>): void {
+  event.stopPropagation()
 }
 
 function ExpandedView({
@@ -119,6 +123,7 @@ function ExpandedView({
           <div className="expanded-view__dimensions">
             {provider.dimensions.map((dimension) => {
               const isChecked = config.checkedDimensions.includes(dimension.id)
+              const isLastCheckedDimension = isChecked && config.checkedDimensions.length === 1
 
               return (
                 <div
@@ -130,19 +135,30 @@ function ExpandedView({
                   onKeyDown={(event) => handleKeyboardToggle(event, onToggleExpand)}
                   aria-label={`折叠 ${providerMeta.name} 的 ${dimension.label}`}
                 >
-                  <label
-                    className="expanded-view__checkbox-wrap"
-                    onClick={(event) => event.stopPropagation()}
+                  <span
+                    className="expanded-view__checkbox-shell"
+                    onMouseDown={stopInteractionPropagation}
+                    onClick={stopInteractionPropagation}
                   >
-                    <input
-                      className="expanded-view__checkbox-input"
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => onToggleDimension(provider.providerId, dimension.id)}
+                    <button
+                      type="button"
+                      role="checkbox"
+                      aria-checked={isChecked}
                       aria-label={`在折叠态显示 ${providerMeta.name} 的 ${dimension.label}`}
-                    />
-                    <span className="expanded-view__checkbox" aria-hidden="true" />
-                  </label>
+                      className={`expanded-view__checkbox-wrap${
+                        isChecked ? ' expanded-view__checkbox-wrap--checked' : ''
+                      }`}
+                      data-no-drag="true"
+                      disabled={isLastCheckedDimension}
+                      onMouseDown={stopInteractionPropagation}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        onToggleDimension(provider.providerId, dimension.id)
+                      }}
+                    >
+                      <span className="expanded-view__checkbox" aria-hidden="true" />
+                    </button>
+                  </span>
 
                   <span className="expanded-view__label">{dimension.label}</span>
                   <span className="expanded-view__bar">

@@ -62,11 +62,44 @@ function appReducer(state: AppState, action: AppAction): AppState {
         config: mergeConfig(state.config, action.payload)
       }
     case 'SET_USAGE_DATA': {
+      const providerConfig = state.config.providers.find(
+        (config) => config.providerId === action.payload.providerId
+      )
+      const shouldSeedCheckedDimensions =
+        Boolean(providerConfig) &&
+        providerConfig!.checkedDimensions.length === 0 &&
+        action.payload.dimensions.length > 0
+      const checkedDimensions = shouldSeedCheckedDimensions
+        ? [action.payload.dimensions[0].id]
+        : providerConfig?.checkedDimensions ?? []
+      const nextPayload =
+        checkedDimensions.length > 0
+          ? {
+              ...action.payload,
+              dimensions: action.payload.dimensions.map((dimension) => ({
+                ...dimension,
+                isChecked: checkedDimensions.includes(dimension.id)
+              }))
+            }
+          : action.payload
       const nextUsageData = new Map(state.usageData)
-      nextUsageData.set(action.payload.providerId, action.payload)
+      nextUsageData.set(action.payload.providerId, nextPayload)
 
       return {
         ...state,
+        config: shouldSeedCheckedDimensions
+          ? {
+              ...state.config,
+              providers: state.config.providers.map((config) =>
+                config.providerId === action.payload.providerId
+                  ? {
+                      ...config,
+                      checkedDimensions
+                    }
+                  : config
+              )
+            }
+          : state.config,
         usageData: nextUsageData
       }
     }
@@ -93,6 +126,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
         const isChecked = config.checkedDimensions.includes(dimensionId)
 
+        if (isChecked && config.checkedDimensions.length === 1) {
+          return config
+        }
+
         return {
           ...config,
           checkedDimensions: isChecked
@@ -105,13 +142,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const providerUsage = nextUsageData.get(providerId)
 
       if (providerUsage) {
+        const activeConfig = nextProviders.find((config) => config.providerId === providerId)
+        const checkedDimensions = new Set(activeConfig?.checkedDimensions ?? [])
+
         nextUsageData.set(providerId, {
           ...providerUsage,
           dimensions: providerUsage.dimensions.map((dimension) =>
-            dimension.id === dimensionId
+            checkedDimensions.size > 0
               ? {
                   ...dimension,
-                  isChecked: !dimension.isChecked
+                  isChecked: checkedDimensions.has(dimension.id)
                 }
               : dimension
           )
@@ -258,6 +298,50 @@ export function AppContextProvider({
       isCancelled = true
     }
   }, [currentConfigSnapshot, hasConfigPersistenceApi, state.config])
+
+  useEffect(() => {
+    const debugWindow = window as typeof window & {
+      __CPUT_RENDERER_DEBUG__?: {
+        getStateSnapshot: () => {
+          config: AppConfig
+          usageData: ProviderUsageData[]
+          isLoading: boolean
+          settingsOpen: boolean
+        }
+        toggleDimension: (providerId: string, dimensionId: string) => void
+        toggleExpand: () => void
+        updateConfig: (patch: Partial<AppConfig>) => void
+      }
+    }
+
+    debugWindow.__CPUT_RENDERER_DEBUG__ = {
+      getStateSnapshot: () => ({
+        config: state.config,
+        usageData: Array.from(state.usageData.values()),
+        isLoading: state.isLoading,
+        settingsOpen: state.settingsOpen
+      }),
+      toggleDimension: (providerId: string, dimensionId: string) => {
+        dispatch({
+          type: 'TOGGLE_DIMENSION',
+          payload: { providerId, dimensionId }
+        })
+      },
+      toggleExpand: () => {
+        dispatch({ type: 'TOGGLE_EXPAND' })
+      },
+      updateConfig: (patch: Partial<AppConfig>) => {
+        dispatch({
+          type: 'SET_CONFIG',
+          payload: patch
+        })
+      }
+    }
+
+    return () => {
+      delete debugWindow.__CPUT_RENDERER_DEBUG__
+    }
+  }, [dispatch, state])
 
   return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>
 }

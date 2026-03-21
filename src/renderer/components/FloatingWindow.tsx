@@ -493,7 +493,7 @@ function FloatingWindow(): React.JSX.Element {
         <div className="floating-window__surface">
           {!hasConfiguredProviders ? (
             <div className="floating-window__placeholder">
-              <strong>请先添加厂商</strong>
+              <strong>请配置厂商</strong>
               <span>从系统托盘打开“设置”，添加一个已启用的厂商配置。</span>
             </div>
           ) : !hasVisibleProviders ? (

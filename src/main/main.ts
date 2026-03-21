@@ -4,7 +4,12 @@ import { app, BrowserWindow, ipcMain, type IpcMainInvokeEvent, type Tray } from 
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
 import { getConfig, setConfig } from './configStore'
-import { createTray } from './tray'
+import {
+  createTray,
+  openSettingsFromTray,
+  refreshFromTray,
+  showMainWindowFromTray
+} from './tray'
 import { createFloatingWindow, resizeWindow, setupEdgeDocking, setupWindowDrag } from './window'
 import type { AppConfig } from '../shared/types'
 
@@ -16,6 +21,8 @@ let resizeListenerRegistered = false
 
 const REQUEST_TIMEOUT_MS = 30_000
 const ZHIPU_DOMAIN = 'https://open.bigmodel.cn'
+const isE2EMode = process.env['CODING_PLAN_USAGE_TRACKER_E2E'] === '1'
+const useZhipuFixture = process.env['CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU'] === '1'
 
 type UsageFetchAuthConfig = Record<string, string>
 
@@ -292,6 +299,32 @@ async function fetchZhipuUsage(authConfig: UsageFetchAuthConfig): Promise<UsageF
     }
   }
 
+  if (useZhipuFixture) {
+    return {
+      providerId: 'zhipu',
+      quotaLimit: {
+        data: {
+          limits: [
+            {
+              type: 'TOKENS_LIMIT',
+              usage: 200000,
+              currentValue: 62000,
+              nextResetTime: Date.now() + 2 * 60 * 60 * 1000
+            },
+            {
+              type: 'TIME_LIMIT',
+              usage: 2000,
+              currentValue: 240,
+              nextResetTime: Date.now() + 6 * 24 * 60 * 60 * 1000
+            }
+          ]
+        }
+      },
+      modelUsage: { data: [] },
+      toolUsage: { data: [] }
+    }
+  }
+
   const urls = buildZhipuUsageUrls(ZHIPU_DOMAIN)
 
   try {
@@ -310,6 +343,44 @@ async function fetchZhipuUsage(authConfig: UsageFetchAuthConfig): Promise<UsageF
   } catch (error) {
     return {
       error: formatUsageFetchError('zhipu', error)
+    }
+  }
+}
+
+function registerE2EDebugApi(): void {
+  if (!isE2EMode) {
+    return
+  }
+
+  ;(globalThis as Record<string, unknown>).__CPUT_E2E__ = {
+    getRuntimeState: () => ({
+      hasTray: Boolean(appTray),
+      mainWindowVisible: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()),
+      mainWindowBounds:
+        mainWindow && !mainWindow.isDestroyed() ? mainWindow.getBounds() : null,
+      settingsWindowCount: BrowserWindow.getAllWindows().filter(
+        (window) => !window.isDestroyed() && window.getTitle() === 'Coding Plan Usage Tracker - 设置'
+      ).length,
+      config: getConfig()
+    }),
+    openSettingsFromTray: () => {
+      openSettingsFromTray()
+    },
+    showMainWindowFromTray: () => {
+      showMainWindowFromTray(mainWindow)
+    },
+    refreshFromTray: () => {
+      refreshFromTray(mainWindow)
+    },
+    closeMainWindow: () => {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        return
+      }
+
+      mainWindow.close()
+    },
+    quitFromTray: () => {
+      app.quit()
     }
   }
 }
@@ -418,6 +489,7 @@ function bootstrapFloatingWindow(): BrowserWindow {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.codingplanusagetracker.app')
   registerAppIpcHandlers()
+  registerE2EDebugApi()
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
