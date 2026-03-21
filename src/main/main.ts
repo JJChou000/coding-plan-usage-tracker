@@ -4,12 +4,7 @@ import { app, BrowserWindow, ipcMain, type IpcMainInvokeEvent, type Tray } from 
 import { electronApp, optimizer } from '@electron-toolkit/utils'
 
 import { getConfig, setConfig } from './configStore'
-import {
-  createTray,
-  openSettingsFromTray,
-  refreshFromTray,
-  showMainWindowFromTray
-} from './tray'
+import { createTray, openSettingsFromTray, refreshFromTray, showMainWindowFromTray } from './tray'
 import { createFloatingWindow, resizeWindow, setupEdgeDocking, setupWindowDrag } from './window'
 import type { AppConfig } from '../shared/types'
 
@@ -413,10 +408,10 @@ function registerE2EDebugApi(): void {
     getRuntimeState: () => ({
       hasTray: Boolean(appTray),
       mainWindowVisible: Boolean(mainWindow && !mainWindow.isDestroyed() && mainWindow.isVisible()),
-      mainWindowBounds:
-        mainWindow && !mainWindow.isDestroyed() ? mainWindow.getBounds() : null,
+      mainWindowBounds: mainWindow && !mainWindow.isDestroyed() ? mainWindow.getBounds() : null,
       settingsWindowCount: BrowserWindow.getAllWindows().filter(
-        (window) => !window.isDestroyed() && window.getTitle() === 'Coding Plan Usage Tracker - 设置'
+        (window) =>
+          !window.isDestroyed() && window.getTitle() === 'Coding Plan Usage Tracker - 设置'
       ).length,
       config: getConfig(),
       zhipuFixtureMode

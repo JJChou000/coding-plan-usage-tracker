@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import assert from 'node:assert/strict'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -12,6 +13,7 @@ const projectRoot = resolve(__dirname, '..', '..')
 const APP_TITLE = 'Coding Plan Usage Tracker'
 const SETTINGS_TITLE = 'Coding Plan Usage Tracker - 设置'
 const DEFAULT_TIMEOUT_MS = 20_000
+const REAL_ZHIPU_TOKEN = process.env.BIGMODEL_API_KEY?.trim() ?? ''
 
 function sleep(milliseconds) {
   return new Promise((resolvePromise) => {
@@ -107,17 +109,22 @@ async function refreshFromTray(electronApp) {
   })
 }
 
-async function launchApplication(userDataDir, fixtureMode = 'success') {
+async function launchApplication(userDataDir, fixtureMode) {
+  const env = {
+    ...process.env,
+    CODING_PLAN_USAGE_TRACKER_E2E: '1',
+    CODING_PLAN_USAGE_TRACKER_USER_DATA_DIR: userDataDir
+  }
+
+  if (fixtureMode) {
+    env.CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU = '1'
+    env.CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU_MODE = fixtureMode
+  }
+
   const electronApp = await electron.launch({
     args: ['.'],
     cwd: projectRoot,
-    env: {
-      ...process.env,
-      CODING_PLAN_USAGE_TRACKER_E2E: '1',
-      CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU: '1',
-      CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU_MODE: fixtureMode,
-      CODING_PLAN_USAGE_TRACKER_USER_DATA_DIR: userDataDir
-    }
+    env
   })
 
   const mainWindow = await electronApp.firstWindow()
@@ -126,7 +133,11 @@ async function launchApplication(userDataDir, fixtureMode = 'success') {
   await waitFor(async () => {
     const runtimeState = await getRuntimeState(electronApp)
     assert.equal(runtimeState.hasTray, true)
-    assert.equal(runtimeState.zhipuFixtureMode, fixtureMode)
+
+    if (fixtureMode) {
+      assert.equal(runtimeState.zhipuFixtureMode, fixtureMode)
+    }
+
     return runtimeState
   })
 
@@ -168,19 +179,31 @@ async function openSettingsWindow(electronApp) {
   return settingsWindow
 }
 
-async function addZhipuProvider(settingsWindow) {
+async function addZhipuProvider(settingsWindow, authValue) {
   await settingsWindow.getByRole('button', { name: '添加厂商' }).click()
 
   const modal = settingsWindow.locator('.settings-panel__modal').last()
   await modal.waitFor({ state: 'visible' })
-  await modal.getByPlaceholder('输入智谱 API Token (sk-...)').fill('sk-stage5-2-fixture')
+  await modal.getByPlaceholder('输入智谱 API Token (sk-...)').fill(authValue)
   await modal.getByRole('button', { name: '保存' }).click()
   await modal.waitFor({ state: 'hidden' })
 }
 
+async function expandMainWindow(mainWindow) {
+  await mainWindow.getByRole('button', { name: /展开 智谱 详情/ }).click()
+  await mainWindow.getByText('每5小时 Token').waitFor({ state: 'visible' })
+}
+
+async function collapseMainWindow(mainWindow) {
+  await mainWindow.locator('.expanded-view__header').first().click()
+  await mainWindow.getByRole('button', { name: /展开 智谱 详情/ }).waitFor({ state: 'visible' })
+}
+
 async function assertInvalidTokenState(mainWindow, settingsWindow, electronApp) {
   await waitFor(async () => {
-    const placeholderCount = await mainWindow.locator('.floating-window__placeholder--error').count()
+    const placeholderCount = await mainWindow
+      .locator('.floating-window__placeholder--error')
+      .count()
     const placeholderText = await mainWindow.locator('.floating-window__surface').textContent()
 
     assert.equal(placeholderCount, 1)
@@ -227,9 +250,7 @@ async function assertErrorBadgeState(mainWindow, expectedErrorPattern) {
     return true
   })
 
-  await mainWindow.evaluate(() => {
-    window.__CPUT_RENDERER_DEBUG__.toggleExpand()
-  })
+  await expandMainWindow(mainWindow)
 
   await waitFor(async () => {
     const expandedBadgeCount = await mainWindow.locator('.expanded-view__status--error').count()
@@ -244,9 +265,7 @@ async function assertErrorBadgeState(mainWindow, expectedErrorPattern) {
   assert.equal((zhipuUsage?.dimensions.length ?? 0) > 0, true)
   assert.match(zhipuUsage?.error ?? '', expectedErrorPattern)
 
-  await mainWindow.evaluate(() => {
-    window.__CPUT_RENDERER_DEBUG__.toggleExpand()
-  })
+  await collapseMainWindow(mainWindow)
 
   await waitFor(async () => {
     const collapsedBadgeCount = await mainWindow.locator('.collapsed-view__status--error').count()
@@ -257,21 +276,47 @@ async function assertErrorBadgeState(mainWindow, expectedErrorPattern) {
 }
 
 async function run() {
-  const userDataDir = await mkdtemp(resolve(tmpdir(), 'coding-plan-usage-tracker-stage5-2-'))
+  const invalidTokenUserDataDir = await mkdtemp(
+    resolve(tmpdir(), 'coding-plan-usage-tracker-stage5-2-invalid-')
+  )
+  const fixtureUserDataDir = await mkdtemp(
+    resolve(tmpdir(), 'coding-plan-usage-tracker-stage5-2-fixture-')
+  )
   let electronApp
+  const invalidTokenMode = REAL_ZHIPU_TOKEN ? 'real' : 'fixture'
 
   try {
-    ;({ electronApp } = await launchApplication(userDataDir, 'auth-error'))
+    if (invalidTokenMode === 'real') {
+      ;({ electronApp } = await launchApplication(invalidTokenUserDataDir))
+      const invalidTokenWindow = await findWindowByTitle(electronApp, APP_TITLE)
+
+      await invalidTokenWindow.getByText('请配置厂商').waitFor({ state: 'visible' })
+
+      const invalidTokenSettingsWindow = await openSettingsWindow(electronApp)
+      await addZhipuProvider(invalidTokenSettingsWindow, 'stage5-invalid-token')
+      await assertInvalidTokenState(invalidTokenWindow, invalidTokenSettingsWindow, electronApp)
+
+      await electronApp.close()
+      electronApp = null
+    }
+
+    ;({ electronApp } = await launchApplication(
+      fixtureUserDataDir,
+      invalidTokenMode === 'fixture' ? 'auth-error' : 'success'
+    ))
     const mainWindow = await findWindowByTitle(electronApp, APP_TITLE)
 
     await mainWindow.getByText('请配置厂商').waitFor({ state: 'visible' })
 
     const settingsWindow = await openSettingsWindow(electronApp)
-    await addZhipuProvider(settingsWindow)
-    await assertInvalidTokenState(mainWindow, settingsWindow, electronApp)
+    await addZhipuProvider(settingsWindow, 'sk-stage5-2-fixture')
 
-    await setFixtureMode(electronApp, 'success')
-    await refreshFromTray(electronApp)
+    if (invalidTokenMode === 'fixture') {
+      await assertInvalidTokenState(mainWindow, settingsWindow, electronApp)
+      await setFixtureMode(electronApp, 'success')
+      await refreshFromTray(electronApp)
+    }
+
     await assertSuccessState(mainWindow)
 
     await setFixtureMode(electronApp, 'offline')
@@ -297,7 +342,9 @@ async function run() {
         {
           stage: '5.2',
           status: 'passed',
-          userDataDir
+          invalidTokenMode,
+          offlineAndMalformedMode: 'fixture',
+          userDataDir: fixtureUserDataDir
         },
         null,
         2
@@ -311,7 +358,8 @@ async function run() {
     }
 
     await sleep(1_000)
-    await removeDirectoryWithRetries(userDataDir)
+    await removeDirectoryWithRetries(invalidTokenUserDataDir)
+    await removeDirectoryWithRetries(fixtureUserDataDir)
   }
 }
 

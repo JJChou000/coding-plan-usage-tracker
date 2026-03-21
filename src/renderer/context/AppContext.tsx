@@ -71,7 +71,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
         action.payload.dimensions.length > 0
       const checkedDimensions = shouldSeedCheckedDimensions
         ? [action.payload.dimensions[0].id]
-        : providerConfig?.checkedDimensions ?? []
+        : (providerConfig?.checkedDimensions ?? [])
       const nextPayload =
         checkedDimensions.length > 0
           ? {

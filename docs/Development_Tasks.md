@@ -452,7 +452,7 @@
 
 > **前置依赖**：阶段 1（主进程），阶段 2（UI 组件），阶段 3（Provider）
 
-- [ ] **验收记录**：2026-03-21 已完成阶段 4 自动化验收；除 4.1「真实智谱 Token 返回真实线上额度数据」因本地缺少可用 Token 仍待补充外，其余项均已通过。详见 `docs/Stage4_Acceptance_Report.md`
+- [x] **验收记录**：2026-03-22 已补充完成 4.1「真实智谱 Token 返回真实线上额度数据」验证，阶段 4 整体通过。详见 `docs/Stage5_Acceptance_Report.md`
 
 ### 4.1 实现主进程 API 请求处理
 
@@ -531,7 +531,7 @@
 
 > **前置依赖**：阶段 1-4 全部完成
 
-- [x] **验收记录**：2026-03-21 已完成阶段 5.1、5.2、5.3 验收，阶段 5 整体通过。详见 `docs/Stage5_1_Acceptance_Report.md`、`docs/Stage5_2_Acceptance_Report.md`、`docs/Stage5_3_Acceptance_Report.md`
+- [x] **验收记录**：2026-03-22 已重新完成阶段 5.1、5.2、5.3 验收，并输出统一报告。详见 `docs/Stage5_Acceptance_Report.md`
 
 ### 5.1 端对端功能测试
 

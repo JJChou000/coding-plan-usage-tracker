@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import assert from 'node:assert/strict'
 import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -93,9 +94,7 @@ function compositeOnBlack(color) {
 
 function toLinearChannel(channel) {
   const normalized = channel / 255
-  return normalized <= 0.03928
-    ? normalized / 12.92
-    : ((normalized + 0.055) / 1.055) ** 2.4
+  return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4
 }
 
 function getRelativeLuminance(color) {
@@ -177,6 +176,60 @@ async function addZhipuProvider(settingsWindow) {
   await modal.locator('.settings-panel__input').first().fill('sk-stage5-3-fixture')
   await modal.locator('.settings-panel__button--primary').last().click()
   await modal.waitFor({ state: 'hidden' })
+}
+
+async function expandMainWindow(mainWindow) {
+  await mainWindow.getByRole('button', { name: /展开 智谱 详情/ }).click()
+  await mainWindow.getByText('每5小时 Token').waitFor({ state: 'visible' })
+}
+
+async function dragMainWindow(mainWindow, screenPosition) {
+  await mainWindow.evaluate((nextScreenPosition) => {
+    const surface = document.querySelector('.floating-window__surface')
+
+    if (!(surface instanceof HTMLElement)) {
+      throw new Error('Floating surface not found.')
+    }
+
+    const rect = surface.getBoundingClientRect()
+    const startClientX = Math.round(rect.left + 24)
+    const startClientY = Math.round(rect.top + 18)
+    const startScreenX = window.screenX + startClientX
+    const startScreenY = window.screenY + startClientY
+    const endClientX = startClientX + 12
+    const endClientY = startClientY + 12
+
+    surface.dispatchEvent(
+      new MouseEvent('mousedown', {
+        bubbles: true,
+        button: 0,
+        clientX: startClientX,
+        clientY: startClientY,
+        screenX: startScreenX,
+        screenY: startScreenY
+      })
+    )
+
+    window.dispatchEvent(
+      new MouseEvent('mousemove', {
+        bubbles: true,
+        clientX: endClientX,
+        clientY: endClientY,
+        screenX: nextScreenPosition.x,
+        screenY: nextScreenPosition.y
+      })
+    )
+
+    window.dispatchEvent(
+      new MouseEvent('mouseup', {
+        bubbles: true,
+        clientX: endClientX,
+        clientY: endClientY,
+        screenX: nextScreenPosition.x,
+        screenY: nextScreenPosition.y
+      })
+    )
+  }, screenPosition)
 }
 
 async function getFloatingVisualMetrics(mainWindow) {
@@ -283,7 +336,7 @@ async function run() {
     await addZhipuProvider(settingsWindow)
 
     await waitFor(async () => {
-      assert.equal(await mainWindow.locator('.collapsed-view__row').count() > 0, true)
+      assert.equal((await mainWindow.locator('.collapsed-view__row').count()) > 0, true)
       return true
     })
 
@@ -310,18 +363,22 @@ async function run() {
 
     await mainWindow.screenshot({ path: resolve(outputDir, 'main-collapsed.png') })
 
-    await mainWindow.evaluate(() => {
-      window.__CPUT_RENDERER_DEBUG__.toggleExpand()
-    })
+    await expandMainWindow(mainWindow)
     await waitFor(async () => {
-      assert.equal(await mainWindow.locator('.expanded-view__dimension').count() > 0, true)
+      assert.equal((await mainWindow.locator('.expanded-view__dimension').count()) > 0, true)
       return true
     })
     await mainWindow.screenshot({ path: resolve(outputDir, 'main-expanded.png') })
 
-    await mainWindow.evaluate(() => {
-      window.__CPUT_RENDERER_DEBUG__.updateConfig({ windowState: 'docked-right', isExpanded: false })
-      window.electronAPI.setWindowState('docked-right')
+    await mainWindow.locator('.expanded-view__header').first().click()
+    await mainWindow.getByRole('button', { name: /展开 智谱 详情/ }).waitFor({ state: 'visible' })
+    const screenMetrics = await mainWindow.evaluate(() => ({
+      availWidth: window.screen.availWidth,
+      availHeight: window.screen.availHeight
+    }))
+    await dragMainWindow(mainWindow, {
+      x: screenMetrics.availWidth - 6,
+      y: Math.round(screenMetrics.availHeight / 2)
     })
     await waitFor(async () => {
       assert.equal(await mainWindow.locator('.edge-handle').count(), 1)

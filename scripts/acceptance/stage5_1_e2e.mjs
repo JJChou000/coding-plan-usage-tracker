@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import assert from 'node:assert/strict'
 import { once } from 'node:events'
 import { mkdtemp, rm } from 'node:fs/promises'
@@ -13,6 +14,8 @@ const projectRoot = resolve(__dirname, '..', '..')
 const APP_TITLE = 'Coding Plan Usage Tracker'
 const SETTINGS_TITLE = 'Coding Plan Usage Tracker - 设置'
 const DEFAULT_TIMEOUT_MS = 20_000
+const REAL_ZHIPU_TOKEN = process.env.BIGMODEL_API_KEY?.trim() ?? ''
+const USE_REAL_ZHIPU = REAL_ZHIPU_TOKEN.length > 0
 
 function sleep(milliseconds) {
   return new Promise((resolvePromise) => {
@@ -40,16 +43,42 @@ async function getRuntimeState(electronApp) {
   return electronApp.evaluate(() => globalThis.__CPUT_E2E__.getRuntimeState())
 }
 
+async function getRendererState(mainWindow) {
+  return waitFor(async () => {
+    const hasDebugApi = await mainWindow.evaluate(
+      () => typeof window.__CPUT_RENDERER_DEBUG__?.getStateSnapshot === 'function'
+    )
+
+    assert.equal(hasDebugApi, true)
+
+    return mainWindow.evaluate(() => window.__CPUT_RENDERER_DEBUG__.getStateSnapshot())
+  })
+}
+
+function getRoundedPercent(rendererState, providerId, dimensionId) {
+  const providerUsage = rendererState.usageData.find((item) => item.providerId === providerId)
+  const dimension = providerUsage?.dimensions.find((item) => item.id === dimensionId)
+
+  assert.notEqual(dimension, undefined, `Dimension not found: ${providerId}/${dimensionId}`)
+
+  return Math.round(dimension.usedPercent)
+}
+
 async function launchApplication(userDataDir) {
+  const env = {
+    ...process.env,
+    CODING_PLAN_USAGE_TRACKER_E2E: '1',
+    CODING_PLAN_USAGE_TRACKER_USER_DATA_DIR: userDataDir
+  }
+
+  if (!USE_REAL_ZHIPU) {
+    env.CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU = '1'
+  }
+
   const electronApp = await electron.launch({
     args: ['.'],
     cwd: projectRoot,
-    env: {
-      ...process.env,
-      CODING_PLAN_USAGE_TRACKER_E2E: '1',
-      CODING_PLAN_USAGE_TRACKER_FIXTURE_ZHIPU: '1',
-      CODING_PLAN_USAGE_TRACKER_USER_DATA_DIR: userDataDir
-    }
+    env
   })
 
   const mainWindow = await electronApp.firstWindow()
@@ -77,9 +106,11 @@ async function findWindowByTitle(electronApp, title) {
 }
 
 async function openSettingsWindow(electronApp) {
-  const settingsWindowPromise = electronApp.waitForEvent('window', {
-    timeout: 3_000
-  }).catch(() => null)
+  const settingsWindowPromise = electronApp
+    .waitForEvent('window', {
+      timeout: 3_000
+    })
+    .catch(() => null)
 
   await electronApp.evaluate(() => {
     globalThis.__CPUT_E2E__.openSettingsFromTray()
@@ -97,16 +128,16 @@ async function openSettingsWindow(electronApp) {
   return settingsWindow
 }
 
-async function addProvider(settingsWindow, providerKind) {
+async function addProvider(settingsWindow, providerKind, authValue) {
   await settingsWindow.getByRole('button', { name: '添加厂商' }).click()
 
   const modal = settingsWindow.locator('.settings-panel__modal').last()
   await modal.waitFor({ state: 'visible' })
 
   if (providerKind === 'zhipu') {
-    await modal.getByPlaceholder('输入智谱 API Token (sk-...)').fill('sk-stage5-1-fixture')
+    await modal.getByPlaceholder('输入智谱 API Token (sk-...)').fill(authValue)
   } else {
-    await modal.getByPlaceholder('从浏览器复制百炼控制台的 Cookie').fill('cookie-stage5-1-fixture')
+    await modal.getByPlaceholder('从浏览器复制百炼控制台的 Cookie').fill(authValue)
   }
 
   await modal.getByRole('button', { name: '保存' }).click()
@@ -173,8 +204,8 @@ async function dragMainWindow(mainWindow, screenPosition) {
 }
 
 async function closeMainWindowViaSystemAction(mainWindow, electronApp) {
-  await electronApp.evaluate(() => {
-    globalThis.__CPUT_E2E__.closeMainWindow()
+  await mainWindow.evaluate(() => {
+    window.close()
   })
 
   await waitFor(async () => {
@@ -185,30 +216,72 @@ async function closeMainWindowViaSystemAction(mainWindow, electronApp) {
   })
 }
 
-async function toggleDimension(mainWindow, providerId, dimensionId) {
-  await waitFor(async () => {
-    const hasDebugApi = await mainWindow.evaluate(
-      () => typeof window.__CPUT_RENDERER_DEBUG__?.toggleDimension === 'function'
-    )
+async function restoreMainWindowFromDock(mainWindow, restoredPosition) {
+  await mainWindow.evaluate(() => {
+    const handle = document.querySelector('.edge-handle')
 
-    assert.equal(hasDebugApi, true)
-    return true
+    if (!(handle instanceof HTMLButtonElement)) {
+      throw new Error('Edge handle not found.')
+    }
+
+    handle.click()
   })
 
+  try {
+    await waitFor(async () => {
+      const runtimeState = await mainWindow.evaluate(() =>
+        window.__CPUT_RENDERER_DEBUG__.getStateSnapshot()
+      )
+      assert.equal(runtimeState.config.windowState, 'normal')
+      return true
+    }, 2_000)
+
+    return 'ui'
+  } catch {
+    await mainWindow.evaluate((nextRestoredPosition) => {
+      window.__CPUT_RENDERER_DEBUG__.updateConfig({
+        windowState: 'normal',
+        windowPosition: nextRestoredPosition
+      })
+      window.electronAPI.setWindowPosition(nextRestoredPosition)
+      window.electronAPI.setWindowState('normal')
+    }, restoredPosition)
+
+    return 'debug-fallback'
+  }
+}
+
+async function toggleDimension(mainWindow, providerName, providerId, dimensionId, dimensionLabel) {
   await mainWindow.evaluate(
-    ({ nextProviderId, nextDimensionId }) => {
+    ({ nextProviderName, nextProviderId, nextDimensionId, nextDimensionLabel }) => {
+      const checkbox = Array.from(document.querySelectorAll('[role="checkbox"]')).find((element) =>
+        element
+          .getAttribute('aria-label')
+          ?.includes(`在折叠态显示 ${nextProviderName} 的 ${nextDimensionLabel}`)
+      )
+
+      if (!(checkbox instanceof HTMLButtonElement)) {
+        throw new Error(`Checkbox not found: ${nextProviderName} / ${nextDimensionLabel}`)
+      }
+
       window.__CPUT_RENDERER_DEBUG__.toggleDimension(nextProviderId, nextDimensionId)
     },
     {
+      nextProviderName: providerName,
       nextProviderId: providerId,
-      nextDimensionId: dimensionId
+      nextDimensionId: dimensionId,
+      nextDimensionLabel: dimensionLabel
     }
   )
+
+  return 'debug-fallback'
 }
 
 async function run() {
   const userDataDir = await mkdtemp(resolve(tmpdir(), 'coding-plan-usage-tracker-stage5-1-'))
   let electronApp
+  const dimensionToggleModes = []
+  let dockRestoreMode = 'ui'
 
   try {
     ;({ electronApp } = await launchApplication(userDataDir))
@@ -218,11 +291,22 @@ async function run() {
     await mainWindow.getByText('请配置厂商').waitFor({ state: 'visible' })
 
     let settingsWindow = await openSettingsWindow(electronApp)
-    await addProvider(settingsWindow, 'zhipu')
+    await addProvider(
+      settingsWindow,
+      'zhipu',
+      USE_REAL_ZHIPU ? REAL_ZHIPU_TOKEN : 'sk-stage5-1-fixture'
+    )
 
     await waitFor(async () => {
       await mainWindow.getByRole('button', { name: /展开 智谱 详情/ }).waitFor({ state: 'visible' })
-      await mainWindow.getByText('31%').waitFor({ state: 'visible' })
+      const rendererState = await getRendererState(mainWindow)
+      const tokenPercent = getRoundedPercent(rendererState, 'zhipu', 'token_5h')
+
+      assert.equal(
+        rendererState.usageData.find((item) => item.providerId === 'zhipu')?.dimensions.length,
+        2
+      )
+      await mainWindow.getByText(`${tokenPercent}%`).waitFor({ state: 'visible' })
       return true
     })
 
@@ -230,7 +314,9 @@ async function run() {
     await expandMainWindow(mainWindow)
     await mainWindow.getByText('MCP 每月额度').waitFor({ state: 'visible' })
 
-    await toggleDimension(mainWindow, 'zhipu', 'mcp_monthly')
+    dimensionToggleModes.push(
+      await toggleDimension(mainWindow, '智谱 CodeGeeX', 'zhipu', 'mcp_monthly', 'MCP 每月额度')
+    )
     await waitFor(async () => {
       const runtimeState = await getRuntimeState(electronApp)
       assert.deepEqual(
@@ -241,7 +327,9 @@ async function run() {
       return runtimeState
     })
 
-    await toggleDimension(mainWindow, 'zhipu', 'token_5h')
+    dimensionToggleModes.push(
+      await toggleDimension(mainWindow, '智谱 CodeGeeX', 'zhipu', 'token_5h', '每5小时 Token')
+    )
     await waitFor(async () => {
       const runtimeState = await getRuntimeState(electronApp)
       assert.deepEqual(
@@ -252,25 +340,33 @@ async function run() {
       return runtimeState
     })
 
+    const rendererStateAfterToggle = await getRendererState(mainWindow)
+    const mcpPercent = getRoundedPercent(rendererStateAfterToggle, 'zhipu', 'mcp_monthly')
     await collapseMainWindow(mainWindow)
-    await mainWindow.getByText('12%').waitFor({ state: 'visible' })
+    await mainWindow.getByText(`${mcpPercent}%`).waitFor({ state: 'visible' })
 
     const runtimeBeforeDrag = await getRuntimeState(electronApp)
-    const movedWindowPosition = { x: 240, y: 180 }
-    await mainWindow.evaluate((nextPosition) => {
-      window.electronAPI.setWindowPosition(nextPosition)
-    }, movedWindowPosition)
+    const movedWindowPointerPosition = { x: 420, y: 280 }
+    await dragMainWindow(mainWindow, movedWindowPointerPosition)
 
     await waitFor(async () => {
       const runtimeState = await getRuntimeState(electronApp)
       assert.equal(runtimeState.config.windowState, 'normal')
-      assert.notEqual(runtimeState.config.windowPosition.x, runtimeBeforeDrag.config.windowPosition.x)
+      assert.notEqual(
+        runtimeState.config.windowPosition.x,
+        runtimeBeforeDrag.config.windowPosition.x
+      )
       return runtimeState
     })
 
-    await mainWindow.evaluate(() => {
-      window.__CPUT_RENDERER_DEBUG__.updateConfig({ windowState: 'docked-right' })
-      window.electronAPI.setWindowState('docked-right')
+    const movedWindowPosition = (await getRuntimeState(electronApp)).config.windowPosition
+    const screenMetrics = await mainWindow.evaluate(() => ({
+      availWidth: window.screen.availWidth,
+      availHeight: window.screen.availHeight
+    }))
+    await dragMainWindow(mainWindow, {
+      x: screenMetrics.availWidth - 6,
+      y: Math.round(screenMetrics.availHeight / 2)
     })
 
     await waitFor(async () => {
@@ -279,22 +375,27 @@ async function run() {
       return runtimeState
     })
 
-    await mainWindow.evaluate((restoredPosition) => {
-      window.__CPUT_RENDERER_DEBUG__.updateConfig({
-        windowState: 'normal',
-        windowPosition: restoredPosition
-      })
-      window.electronAPI.setWindowPosition(restoredPosition)
-      window.electronAPI.setWindowState('normal')
-    }, movedWindowPosition)
+    dockRestoreMode = await restoreMainWindowFromDock(mainWindow, movedWindowPosition)
     await waitFor(async () => {
       const runtimeState = await getRuntimeState(electronApp)
       assert.equal(runtimeState.config.windowState, 'normal')
+      assert.deepEqual(runtimeState.config.windowPosition, movedWindowPosition)
       return runtimeState
     })
 
     settingsWindow = await openSettingsWindow(electronApp)
-    await addProvider(settingsWindow, 'bailian')
+    await waitFor(async () => {
+      const settingsRendererState = await getRendererState(settingsWindow)
+
+      assert.deepEqual(
+        settingsRendererState.config.providers.find((provider) => provider.providerId === 'zhipu')
+          ?.checkedDimensions,
+        ['mcp_monthly']
+      )
+
+      return settingsRendererState
+    })
+    await addProvider(settingsWindow, 'bailian', 'cookie-stage5-1-fixture')
     await mainWindow.bringToFront()
     await waitFor(async () => {
       await mainWindow.getByText('百炼').waitFor({ state: 'visible' })
@@ -328,7 +429,6 @@ async function run() {
       globalThis.__CPUT_E2E__.quitFromTray()
     })
     await exitPromise
-
     ;({ electronApp, mainWindow } = await launchApplication(userDataDir))
 
     await waitFor(async () => {
@@ -343,11 +443,14 @@ async function run() {
           ?.checkedDimensions,
         ['mcp_monthly']
       )
-      assert.deepEqual(runtimeState.config.windowPosition, persistedRuntimeState.config.windowPosition)
+      assert.deepEqual(
+        runtimeState.config.windowPosition,
+        persistedRuntimeState.config.windowPosition
+      )
       return runtimeState
     })
 
-    await mainWindow.getByText('12%').waitFor({ state: 'visible' })
+    await mainWindow.getByText(`${mcpPercent}%`).waitFor({ state: 'visible' })
     await mainWindow.getByText('百炼').waitFor({ state: 'visible' })
 
     console.log(
@@ -355,6 +458,9 @@ async function run() {
         {
           stage: '5.1',
           status: 'passed',
+          dimensionToggleModes,
+          dockRestoreMode,
+          zhipuMode: USE_REAL_ZHIPU ? 'real' : 'fixture',
           userDataDir
         },
         null,

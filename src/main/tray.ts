@@ -38,6 +38,7 @@ export function openSettingsFromTray(): BrowserWindow {
       return
     }
 
+    settingsWindow.webContents.send('config:updated', getConfig())
     settingsWindow.webContents.send('app:open-settings')
   }
 

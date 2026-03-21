@@ -117,21 +117,21 @@ function ExpandedView({
                   providerMeta.icon
                 )}
               </span>
-                <span className="expanded-view__name">{providerMeta.name}</span>
-              </span>
-              <span className="expanded-view__header-meta">
-                {provider.error ? (
-                  <span
-                    className="expanded-view__status expanded-view__status--error"
-                    title={provider.error}
-                  >
-                    错误
-                  </span>
-                ) : null}
-                <span className="expanded-view__chevron" aria-hidden="true">
-                  ▼
+              <span className="expanded-view__name">{providerMeta.name}</span>
+            </span>
+            <span className="expanded-view__header-meta">
+              {provider.error ? (
+                <span
+                  className="expanded-view__status expanded-view__status--error"
+                  title={provider.error}
+                >
+                  错误
                 </span>
+              ) : null}
+              <span className="expanded-view__chevron" aria-hidden="true">
+                ▼
               </span>
+            </span>
           </button>
 
           <div className="expanded-view__dimensions">
