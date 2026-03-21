@@ -7,7 +7,10 @@
 }
 
 body {
-  font-family: 'Segoe UI', -apple-system, sans-serif;
+  font-family:
+    'Segoe UI',
+    -apple-system,
+    sans-serif;
   color: var(--text-primary);
   background: transparent;
   user-select: none;
@@ -34,68 +37,178 @@ body.is-dragging {
 .app-shell {
   width: 100%;
   min-height: 100%;
-  padding: 16px;
+  position: relative;
+}
+
+.app-shell--floating {
+  overflow: hidden;
+}
+
+.app-shell--preview {
+  padding: 10px;
   cursor: grab;
   background:
-    radial-gradient(circle at top right, rgba(74, 222, 128, 0.16), transparent 38%),
+    radial-gradient(circle at top right, rgba(74, 222, 128, 0.18), transparent 34%),
     linear-gradient(160deg, rgba(17, 19, 26, 0.94), rgba(27, 32, 44, 0.88));
+}
+
+.app-shell--settings {
+  padding: 18px;
+  overflow: auto;
+  cursor: default;
+  background:
+    radial-gradient(circle at top right, rgba(74, 222, 128, 0.14), transparent 30%),
+    linear-gradient(180deg, #0b1018, #121722 58%);
 }
 
 .stage-card {
   width: 100%;
   height: 100%;
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding: 10px;
   border: 1px solid var(--border-color);
-  border-radius: 18px;
+  border-radius: 16px;
   background: var(--bg-primary);
-  backdrop-filter: blur(var(--blur-amount));
+  backdrop-filter: blur(calc(var(--blur-amount) * 0.6));
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+}
+
+.stage-card--preview {
+  overflow: hidden;
+}
+
+.stage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .stage-badge {
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
+  padding: 4px 8px;
   border-radius: 999px;
   background: rgba(74, 222, 128, 0.12);
   color: var(--progress-green);
-  font-size: 12px;
+  font-size: 10px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.stage-card h1 {
-  margin-top: 14px;
-  font-size: 24px;
-  line-height: 1.15;
-}
-
-.stage-copy {
-  margin-top: 10px;
+.stage-status {
   color: var(--text-secondary);
-  line-height: 1.5;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.stage-grid {
-  display: grid;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.stage-panel {
-  display: grid;
-  gap: 4px;
-  padding: 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  background: var(--bg-secondary);
-}
-
-.stage-panel strong {
-  font-size: 13px;
-}
-
-.stage-panel span {
+.stage-preview-note {
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
+}
+
+.stage-preview-arena {
+  position: relative;
+  flex: 1;
+  min-height: 280px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 20% 15%, rgba(74, 222, 128, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+  overflow: hidden;
+}
+
+.stage-preview-arena--tall {
+  min-height: 360px;
+}
+
+.stage-preview-arena::after {
+  content: '';
+  position: absolute;
+  inset: 18px;
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  pointer-events: none;
+}
+
+.stage-preview-core__title,
+.stage-preview-core__copy {
+  display: none;
+}
+
+.settings-stage {
+  width: 100%;
+  min-height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
+  gap: 18px;
+}
+
+.settings-stage__panel,
+.settings-stage__preview,
+.settings-page {
+  min-width: 0;
+}
+
+.settings-page {
+  max-width: 920px;
+  margin: 0 auto;
+}
+
+.stage-preview-core__title {
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.stage-preview-core__copy {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.stage-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.stage-preview-chip {
+  padding: 6px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.stage-preview-chip:hover,
+.stage-preview-chip:focus-visible,
+.stage-preview-chip--active {
+  border-color: rgba(74, 222, 128, 0.3);
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--text-primary);
+  outline: none;
+}
+
+@media (max-width: 980px) {
+  .settings-stage {
+    grid-template-columns: 1fr;
+  }
+
+  .app-shell--settings {
+    padding: 12px;
+  }
 }

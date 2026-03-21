@@ -1,1 +1,317 @@
+.settings-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  height: 100%;
+  padding: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(74, 222, 128, 0.08), transparent 36%),
+    linear-gradient(180deg, #121722, #0d1119 62%);
+  box-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+}
 
+.settings-panel,
+.settings-panel * {
+  user-select: text;
+}
+
+.settings-panel button,
+.settings-panel select {
+  user-select: none;
+}
+
+.settings-panel__header,
+.settings-panel__section,
+.settings-panel__footer,
+.settings-panel__card,
+.settings-panel__modal {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(9, 13, 20, 0.82);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.settings-panel__header,
+.settings-panel__section,
+.settings-panel__footer {
+  padding: 18px;
+  border-radius: 20px;
+}
+
+.settings-panel__eyebrow {
+  margin-bottom: 8px;
+  color: rgba(74, 222, 128, 0.9);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.settings-panel__header-row,
+.settings-panel__section-head,
+.settings-panel__footer,
+.settings-panel__card-head,
+.settings-panel__actions,
+.settings-panel__modal-head,
+.settings-panel__modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-panel__title,
+.settings-panel__section-title,
+.settings-panel__modal-title {
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.settings-panel__section-title {
+  font-size: 16px;
+}
+
+.settings-panel__modal-title {
+  font-size: 20px;
+}
+
+.settings-panel__description,
+.settings-panel__section-copy,
+.settings-panel__provider-id,
+.settings-panel__meta,
+.settings-panel__select-label {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.settings-panel__alert,
+.settings-panel__error {
+  padding: 12px 14px;
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  border-radius: 16px;
+  background: rgba(126, 32, 32, 0.18);
+  color: #fecaca;
+  font-size: 13px;
+}
+
+.settings-panel__providers {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.settings-panel__card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 18px;
+}
+
+.settings-panel__provider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.settings-panel__provider-copy {
+  min-width: 0;
+}
+
+.settings-panel__provider-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.settings-panel__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+  font-size: 18px;
+}
+
+.settings-panel__status {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.settings-panel__status--ok {
+  background: rgba(74, 222, 128, 0.12);
+  color: var(--progress-green);
+}
+
+.settings-panel__status--error {
+  background: rgba(248, 113, 113, 0.12);
+  color: var(--progress-red);
+}
+
+.settings-panel__status--empty {
+  background: rgba(250, 204, 21, 0.12);
+  color: var(--progress-yellow);
+}
+
+.settings-panel__meta {
+  display: grid;
+  gap: 6px;
+  padding-left: 18px;
+}
+
+.settings-panel__empty {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 20px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.settings-panel__empty--compact {
+  margin-top: 0;
+}
+
+.settings-panel__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.settings-panel__button:hover,
+.settings-panel__button:focus-visible,
+.settings-panel__select:hover,
+.settings-panel__select:focus-visible,
+.settings-panel__input:hover,
+.settings-panel__input:focus-visible {
+  border-color: rgba(255, 255, 255, 0.2);
+  outline: none;
+}
+
+.settings-panel__button:active {
+  transform: translateY(1px);
+}
+
+.settings-panel__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.settings-panel__button--primary {
+  border-color: rgba(74, 222, 128, 0.24);
+  background: linear-gradient(180deg, rgba(74, 222, 128, 0.22), rgba(74, 222, 128, 0.14));
+}
+
+.settings-panel__button--danger {
+  border-color: rgba(248, 113, 113, 0.2);
+  color: #fecaca;
+}
+
+.settings-panel__select-wrap {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-panel__select,
+.settings-panel__input {
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.settings-panel__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(3, 6, 12, 0.7);
+}
+
+.settings-panel__modal {
+  width: min(520px, 100%);
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 24px;
+}
+
+.settings-panel__fields {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-panel__field {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-panel__field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-panel__field-label em {
+  color: var(--progress-red);
+  font-style: normal;
+}
+
+@media (max-width: 760px) {
+  .settings-panel {
+    padding: 16px;
+    border-radius: 20px;
+  }
+
+  .settings-panel__header-row,
+  .settings-panel__footer,
+  .settings-panel__card-head,
+  .settings-panel__actions,
+  .settings-panel__modal-head,
+  .settings-panel__modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-panel__status {
+    align-self: flex-start;
+  }
+}

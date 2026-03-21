@@ -1,1 +1,61 @@
+.edge-handle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--handle-width);
+  min-width: var(--handle-width);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.04)),
+    rgba(20, 24, 33, 0.72);
+  box-shadow:
+    0 10px 24px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  cursor: pointer;
+  backdrop-filter: blur(calc(var(--blur-amount) * 0.7));
+  transition:
+    transform var(--transition-fast),
+    background-color var(--transition-fast),
+    border-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
 
+.edge-handle:hover,
+.edge-handle:focus-visible {
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08)),
+    rgba(28, 34, 46, 0.82);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.32),
+    0 0 18px rgba(74, 222, 128, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  outline: none;
+}
+
+.edge-handle:active {
+  transform: scale(0.97);
+}
+
+.edge-handle--left,
+.edge-handle--right {
+  height: var(--edge-handle-length, calc(var(--row-height) * 2 + var(--padding) * 2));
+}
+
+.edge-handle--top,
+.edge-handle--bottom {
+  width: var(--edge-handle-length, calc(var(--row-height) * 2 + var(--padding) * 2));
+  min-width: var(--edge-handle-length, calc(var(--row-height) * 2 + var(--padding) * 2));
+  height: var(--handle-width);
+}
+
+.edge-handle__arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.12);
+}

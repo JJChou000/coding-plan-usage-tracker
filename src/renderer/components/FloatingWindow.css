@@ -1,1 +1,58 @@
+.floating-window {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--window-width);
+  transition:
+    width var(--transition-normal),
+    height var(--transition-normal),
+    transform var(--transition-normal);
+}
 
+.floating-window--docked {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.floating-window__surface {
+  width: 100%;
+  height: 100%;
+  padding: var(--padding);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  background: var(--bg-primary);
+  backdrop-filter: blur(var(--blur-amount));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+
+.floating-window__placeholder {
+  height: 100%;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  padding: 12px;
+  text-align: center;
+}
+
+.floating-window__placeholder strong {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.floating-window__placeholder span {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.floating-window__handle {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}

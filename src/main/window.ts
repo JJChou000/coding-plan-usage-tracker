@@ -11,8 +11,8 @@ const SETTINGS_WINDOW_WIDTH = 500
 const SETTINGS_WINDOW_HEIGHT = 400
 const EDGE_DOCK_THRESHOLD = 20
 const HANDLE_WIDTH = 24
-const MIN_WINDOW_WIDTH = 160
-const MIN_WINDOW_HEIGHT = 80
+const MIN_WINDOW_WIDTH = HANDLE_WIDTH
+const MIN_WINDOW_HEIGHT = HANDLE_WIDTH
 const ANIMATION_STEPS = 8
 const ANIMATION_INTERVAL_MS = 12
 
@@ -278,7 +278,9 @@ export function setupEdgeDocking(win: BrowserWindow): void {
     }
 
     const targetPosition =
-      nextState === 'normal' ? getRestoredPosition(floatingWindow) : getDockedPosition(floatingWindow, nextState)
+      nextState === 'normal'
+        ? getRestoredPosition(floatingWindow)
+        : getDockedPosition(floatingWindow, nextState)
 
     animateWindowPosition(floatingWindow, targetPosition.x, targetPosition.y)
     setConfig({

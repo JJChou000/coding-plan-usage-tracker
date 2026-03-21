@@ -17,7 +17,7 @@
   2. 如果脚手架工具不支持 `./` 目标目录，在临时目录创建后将所有文件移动到项目根目录
   3. 执行 `npm install`
   4. 执行 `npm run dev` 确认能正常启动 Electron 窗口
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. `npm run dev` 成功启动，显示 Electron 窗口
   2. 项目中存在 `src/main/`、`src/renderer/`、`src/preload/` 目录
   3. `package.json` 中包含 `electron`、`react`、`vite` 依赖
@@ -44,6 +44,7 @@
   1. 按照 `docs/Engineering.md` 第 5 节的目录结构，创建所有缺失的目录和空文件
   2. 创建 `resources/icons/` 目录
   3. 创建 `src/renderer/styles/variables.css`，写入以下 CSS 变量：
+
      ```css
      :root {
        /* 颜色 */
@@ -53,29 +54,31 @@
        --text-primary: #e0e0e0;
        --text-secondary: #8b8b9e;
        --border-color: rgba(255, 255, 255, 0.08);
-       
+
        /* 进度条颜色 */
        --progress-green: #4ade80;
        --progress-yellow: #facc15;
        --progress-red: #f87171;
        --progress-bg: rgba(255, 255, 255, 0.1);
-       
+
        /* 尺寸 */
        --window-width: 320px;
        --row-height: 36px;
        --padding: 8px;
        --border-radius: 12px;
        --handle-width: 24px;
-       
+
        /* 动画 */
        --transition-fast: 150ms ease;
        --transition-normal: 250ms ease;
-       
+
        /* 毛玻璃 */
        --blur-amount: 20px;
      }
      ```
+
   4. 创建 `src/renderer/styles/global.css`，写入全局样式重置和毛玻璃基础：
+
      ```css
      @import './variables.css';
 
@@ -86,13 +89,17 @@
      }
 
      body {
-       font-family: 'Segoe UI', -apple-system, sans-serif;
+       font-family:
+         'Segoe UI',
+         -apple-system,
+         sans-serif;
        color: var(--text-primary);
        background: transparent;
        user-select: none;
        overflow: hidden;
      }
      ```
+
 - [x] **验收标准**：
   1. 所有目录和文件已创建
   2. `variables.css` 和 `global.css` 内容正确
@@ -192,9 +199,11 @@
 
 > **前置依赖**：阶段 1 全部完成
 
+- [x] **验收记录**：2026-03-20 已完成阶段 2 验收，详见 `docs/Stage2_Acceptance_Report.md`
+
 ### 2.1 实现 ProgressBar 进度条组件
 
-- [ ] **操作**：编写 `src/renderer/components/ProgressBar.tsx` 和 `ProgressBar.css`
+- [x] **操作**：编写 `src/renderer/components/ProgressBar.tsx` 和 `ProgressBar.css`
   - **Props**：`percent: number`（0-100）、`size?: 'sm' | 'md'`（默认 'md'）
   - **渲染**：外层容器 div + 内层填充 div
   - **颜色逻辑**：
@@ -205,14 +214,14 @@
     - 外层：`height: 6px`（md）或 `4px`（sm），`background: var(--progress-bg)`，`border-radius: 3px`
     - 内层：`width` 用 `percent%`，`transition: width var(--transition-normal)`
     - 内层添加微弱发光效果：`box-shadow: 0 0 6px currentColor`
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 组件渲染出进度条
   2. 传入不同 percent 值，条宽和颜色正确变化
   3. 进度变化时有平滑过渡动画
 
 ### 2.2 实现 CollapsedView 折叠态组件
 
-- [ ] **操作**：编写 `src/renderer/components/CollapsedView.tsx` 和 `CollapsedView.css`
+- [x] **操作**：编写 `src/renderer/components/CollapsedView.tsx` 和 `CollapsedView.css`
   - **Props**：`providers: ProviderUsageData[]`，`configs: ProviderConfig[]`，`onToggleExpand: () => void`
   - **渲染逻辑**（每个 provider 一行）：
     1. 厂商图标（16x16 `<img>` 或 emoji 占位）
@@ -226,14 +235,14 @@
     - 使用 flexbox 布局：`图标 名称 | 进度条 百分比 | 时间`
     - 鼠标悬停时背景色微变 `var(--bg-hover)`
     - cursor: pointer
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 显示所有已配置厂商的折叠行
   2. 只展示勾选维度的百分比
   3. 点击可触发展开回调
 
 ### 2.3 实现 ExpandedView 展开态组件
 
-- [ ] **操作**：编写 `src/renderer/components/ExpandedView.tsx` 和 `ExpandedView.css`
+- [x] **操作**：编写 `src/renderer/components/ExpandedView.tsx` 和 `ExpandedView.css`
   - **Props**：`providers: ProviderUsageData[]`，`configs: ProviderConfig[]`，`onToggleExpand: () => void`，`onToggleDimension: (providerId: string, dimensionId: string) => void`
   - **渲染逻辑**（每个 provider 一个区块）：
     1. **厂商标题行**：图标 + 名称 + 展开/折叠箭头图标(▼)
@@ -250,14 +259,14 @@
     - 维度行比折叠行更紧凑，左边有缩进 `padding-left: 24px`
     - checkbox 使用自定义样式（小圆角方框，选中后有主题色填充）
     - 厂商区块之间的分隔线：`border-bottom: 1px solid var(--border-color)`
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 展示所有厂商的所有维度
   2. 复选框可以勾选/取消，状态正确反映
   3. 点击非复选框区域可触发折叠回调
 
 ### 2.4 实现 EdgeHandle 边缘把手组件
 
-- [ ] **操作**：编写 `src/renderer/components/EdgeHandle.tsx` 和 `EdgeHandle.css`
+- [x] **操作**：编写 `src/renderer/components/EdgeHandle.tsx` 和 `EdgeHandle.css`
   - **Props**：`side: 'left' | 'right' | 'top' | 'bottom'`，`onClick: () => void`
   - **渲染**：一个窄条（`var(--handle-width)` 宽），包含一个箭头图标（CSS 三角形或 Unicode 字符 ▶/◀/▲/▼）
   - **CSS**：
@@ -265,14 +274,14 @@
     - 鼠标悬停时变亮
     - cursor: pointer
     - 高度与浮窗折叠态相同
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 组件正确渲染为窄条
   2. 箭头方向根据 side 参数正确显示
   3. 点击可触发回调
 
 ### 2.5 实现 FloatingWindow 浮窗主容器
 
-- [ ] **操作**：编写 `src/renderer/components/FloatingWindow.tsx` 和 `FloatingWindow.css`
+- [x] **操作**：编写 `src/renderer/components/FloatingWindow.tsx` 和 `FloatingWindow.css`
   - **职责**：组合 CollapsedView / ExpandedView / EdgeHandle
   - **状态管理**：从 AppContext 读取 `isExpanded`、`windowState`
   - **渲染逻辑**：
@@ -295,7 +304,7 @@
     - 圆角：`border-radius: var(--border-radius)`
     - 边框：`border: 1px solid var(--border-color)`
     - 阴影：`box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3)`
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 浮窗显示毛玻璃效果
   2. 可以拖拽移动
   3. 点击切换折叠/展开，窗口尺寸跟随变化
@@ -304,7 +313,7 @@
 
 ### 2.6 实现 SettingsPanel 设置面板
 
-- [ ] **操作**：编写 `src/renderer/components/SettingsPanel.tsx` 和 `SettingsPanel.css`
+- [x] **操作**：编写 `src/renderer/components/SettingsPanel.tsx` 和 `SettingsPanel.css`
   - **布局**：
     - 顶部标题 "设置"
     - 厂商列表区域：展示已添加的厂商卡片
@@ -320,7 +329,7 @@
     - "保存" 按钮 → 通过 IPC 保存到 configStore
   - 所有配置变更通过 `window.electronAPI.setConfig()` 持久化
   - **CSS**：深色主题，与浮窗风格一致但不使用毛玻璃（非透明窗口）
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 设置面板可以从托盘菜单打开
   2. 可以添加、编辑、删除厂商配置
   3. 刷新频率可以修改
@@ -334,13 +343,13 @@
 
 ### 3.1 实现 Provider 注册中心
 
-- [ ] **操作**：编写 `src/renderer/providers/providerRegistry.ts`
+- [x] **操作**：编写 `src/renderer/providers/providerRegistry.ts`
   - 创建 `providerRegistry: Map<string, IProvider>` 存储所有可用 Provider
   - 导出 `registerProvider(provider: IProvider): void` — 注册新 Provider
   - 导出 `getProvider(id: string): IProvider | undefined` — 获取 Provider
   - 导出 `getAllProviders(): IProvider[]` — 获取所有已注册 Provider
   - 在文件底部导入并自动注册所有 Provider（智谱、百炼）
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. `getAllProviders()` 返回已注册的 Provider 列表
   2. `getProvider('zhipu')` 和 `getProvider('bailian')` 返回对应实例
 
@@ -351,7 +360,15 @@
   - `id`: `'zhipu'`，`name`: `'智谱 CodeGeeX'`
   - `getAuthFields()` 返回：
     ```typescript
-    [{ key: 'authToken', label: 'API Token', type: 'password', placeholder: '输入智谱 API Token (sk-...)', required: true }]
+    ;[
+      {
+        key: 'authToken',
+        label: 'API Token',
+        type: 'password',
+        placeholder: '输入智谱 API Token (sk-...)',
+        required: true
+      }
+    ]
     ```
   - `fetchUsage(auth)` 实现（此函数的真正网络请求在主进程执行，这里只定义请求参数和解析逻辑）：
     1. 构造请求参数：baseUrl = `https://open.bigmodel.cn`
@@ -370,27 +387,59 @@
 
 ### 3.3 实现阿里云百炼 Provider（占位）
 
-- [ ] **操作**：编写 `src/renderer/providers/bailianProvider.ts`
+- [x] **操作**：编写 `src/renderer/providers/bailianProvider.ts`
   - 实现 `IProvider` 接口
   - `id`: `'bailian'`，`name`: `'阿里云百炼'`
   - `getAuthFields()` 返回：
     ```typescript
-    [{ key: 'cookie', label: 'Cookie', type: 'password', placeholder: '从浏览器复制百炼控制台的 Cookie', required: true }]
+    ;[
+      {
+        key: 'cookie',
+        label: 'Cookie',
+        type: 'password',
+        placeholder: '从浏览器复制百炼控制台的 Cookie',
+        required: true
+      }
+    ]
     ```
   - `fetchUsage(auth)` 当前返回 **Mock 数据**：
     ```typescript
     return {
       providerId: 'bailian',
       dimensions: [
-        { id: 'usage_5h', label: '近5小时用量', usedPercent: 6, used: 540, total: 9000, resetTime: '10:32:42', isChecked: true },
-        { id: 'usage_7d', label: '近一周用量', usedPercent: 25, used: 4500, total: 18000, resetTime: '03-23', isChecked: false },
-        { id: 'usage_30d', label: '近一月用量', usedPercent: 18, used: 3240, total: 18000, resetTime: '04-13', isChecked: false },
+        {
+          id: 'usage_5h',
+          label: '近5小时用量',
+          usedPercent: 6,
+          used: 540,
+          total: 9000,
+          resetTime: '10:32:42',
+          isChecked: true
+        },
+        {
+          id: 'usage_7d',
+          label: '近一周用量',
+          usedPercent: 25,
+          used: 4500,
+          total: 18000,
+          resetTime: '03-23',
+          isChecked: false
+        },
+        {
+          id: 'usage_30d',
+          label: '近一月用量',
+          usedPercent: 18,
+          used: 3240,
+          total: 18000,
+          resetTime: '04-13',
+          isChecked: false
+        }
       ],
-      lastUpdated: Date.now(),
-    };
+      lastUpdated: Date.now()
+    }
     ```
   - 在代码中添加 `// TODO: 替换为真实 API 调用，待确认 API 端点和认证方式` 注释
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. Provider 可正常注册和调用
   2. Mock 数据格式符合 `ProviderUsageData` 接口
   3. 3 个维度数据正确展示在 UI 中

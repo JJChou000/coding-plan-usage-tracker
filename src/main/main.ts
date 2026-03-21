@@ -91,12 +91,23 @@ function buildMockUsageData(providerId: string): ProviderUsageData {
 }
 
 function handleUsageFetch(event: IpcMainInvokeEvent, providerId: unknown): ProviderUsageData {
-  const resolvedProviderId = typeof providerId === 'string' && providerId.length > 0 ? providerId : 'unknown'
+  const resolvedProviderId =
+    typeof providerId === 'string' && providerId.length > 0 ? providerId : 'unknown'
   const data = buildMockUsageData(resolvedProviderId)
 
   event.sender.send('usage:data', data)
 
   return data
+}
+
+function broadcastConfigUpdate(config: AppConfig): void {
+  for (const window of BrowserWindow.getAllWindows()) {
+    if (window.isDestroyed()) {
+      continue
+    }
+
+    window.webContents.send('config:updated', config)
+  }
 }
 
 function registerAppIpcHandlers(): void {
@@ -108,6 +119,7 @@ function registerAppIpcHandlers(): void {
   ipcMain.handle('config:set', (_event, configPatch) => {
     if (isConfigPatch(configPatch)) {
       setConfig(configPatch)
+      broadcastConfigUpdate(getConfig())
     }
   })
   ipcMain.handle('usage:fetch', handleUsageFetch)
@@ -121,7 +133,12 @@ function bindWindowIpc(): void {
   }
 
   ipcMain.on('window:resize', (_event, width, height) => {
-    if (!mainWindow || mainWindow.isDestroyed() || typeof width !== 'number' || typeof height !== 'number') {
+    if (
+      !mainWindow ||
+      mainWindow.isDestroyed() ||
+      typeof width !== 'number' ||
+      typeof height !== 'number'
+    ) {
       return
     }
 
