@@ -5,6 +5,12 @@ export interface ProgressBarProps {
   size?: 'sm' | 'md'
 }
 
+type ProgressPalette = {
+  start: string
+  end: string
+  glow: string
+}
+
 function clampPercent(percent: number): number {
   if (!Number.isFinite(percent)) {
     return 0
@@ -25,9 +31,33 @@ function getProgressColor(percent: number): string {
   return 'var(--progress-red)'
 }
 
+function getProgressPalette(percent: number): ProgressPalette {
+  if (percent <= 60) {
+    return {
+      start: 'var(--progress-green-soft)',
+      end: 'var(--progress-green)',
+      glow: 'rgba(69, 212, 131, 0.42)'
+    }
+  }
+
+  if (percent <= 80) {
+    return {
+      start: 'var(--progress-yellow-soft)',
+      end: 'var(--progress-yellow)',
+      glow: 'rgba(244, 201, 75, 0.38)'
+    }
+  }
+
+  return {
+    start: 'var(--progress-red-soft)',
+    end: 'var(--progress-red)',
+    glow: 'rgba(240, 108, 120, 0.42)'
+  }
+}
+
 function ProgressBar({ percent, size = 'md' }: ProgressBarProps): React.JSX.Element {
   const safePercent = clampPercent(percent)
-  const progressColor = getProgressColor(safePercent)
+  const progressPalette = getProgressPalette(safePercent)
 
   return (
     <div
@@ -42,8 +72,10 @@ function ProgressBar({ percent, size = 'md' }: ProgressBarProps): React.JSX.Elem
         className="progress-bar__fill"
         style={{
           width: `${safePercent}%`,
-          color: progressColor,
-          background: progressColor
+          color: getProgressColor(safePercent),
+          ['--progress-fill-start' as string]: progressPalette.start,
+          ['--progress-fill-end' as string]: progressPalette.end,
+          ['--progress-glow' as string]: progressPalette.glow
         }}
       />
     </div>

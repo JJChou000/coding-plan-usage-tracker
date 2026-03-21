@@ -9,8 +9,13 @@
 body {
   font-family:
     'Segoe UI',
+    'Microsoft YaHei UI',
+    'Microsoft YaHei',
+    'PingFang SC',
     -apple-system,
     sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
   color: var(--text-primary);
   background: transparent;
   user-select: none;
@@ -71,9 +76,14 @@ body.is-dragging {
   padding: 10px;
   border: 1px solid var(--border-color);
   border-radius: 16px;
-  background: var(--bg-primary);
-  backdrop-filter: blur(calc(var(--blur-amount) * 0.6));
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.32);
+  background:
+    radial-gradient(circle at top right, rgba(74, 222, 128, 0.1), transparent 34%),
+    linear-gradient(180deg, rgba(17, 22, 31, 0.88), rgba(11, 15, 23, 0.82));
+  backdrop-filter: blur(calc(var(--blur-amount) * 0.6)) saturate(140%);
+  -webkit-backdrop-filter: blur(calc(var(--blur-amount) * 0.6)) saturate(140%);
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .stage-card--preview {
@@ -109,6 +119,7 @@ body.is-dragging {
 .stage-preview-note {
   color: var(--text-secondary);
   font-size: 12px;
+  line-height: 1.5;
 }
 
 .stage-preview-arena {

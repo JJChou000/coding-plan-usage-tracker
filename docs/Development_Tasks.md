@@ -531,7 +531,7 @@
 
 > **前置依赖**：阶段 1-4 全部完成
 
-- [ ] **验收记录**：2026-03-21 已完成阶段 5.1、5.2 验收；阶段 5 整体仍待 5.3 视觉检查后才能标记为最终通过。详见 `docs/Stage5_1_Acceptance_Report.md`、`docs/Stage5_2_Acceptance_Report.md`
+- [x] **验收记录**：2026-03-21 已完成阶段 5.1、5.2、5.3 验收，阶段 5 整体通过。详见 `docs/Stage5_1_Acceptance_Report.md`、`docs/Stage5_2_Acceptance_Report.md`、`docs/Stage5_3_Acceptance_Report.md`
 
 ### 5.1 端对端功能测试
 
@@ -561,7 +561,7 @@
 
 ### 5.3 视觉检查
 
-- [ ] **测试清单**：
+- [x] **测试清单**：
   1. 毛玻璃效果正常显示
   2. 进度条颜色渐变正确
   3. 动画过渡流畅

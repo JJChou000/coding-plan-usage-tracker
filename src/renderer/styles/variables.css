@@ -1,17 +1,23 @@
 :root {
   /* 颜色 */
-  --bg-primary: rgba(25, 25, 35, 0.85);
-  --bg-secondary: rgba(35, 35, 50, 0.6);
-  --bg-hover: rgba(255, 255, 255, 0.05);
-  --text-primary: #e0e0e0;
-  --text-secondary: #8b8b9e;
-  --border-color: rgba(255, 255, 255, 0.08);
+  --bg-primary: rgba(15, 20, 29, 0.78);
+  --bg-secondary: rgba(23, 30, 42, 0.62);
+  --bg-hover: rgba(255, 255, 255, 0.08);
+  --text-primary: #f3f7fb;
+  --text-secondary: #a7b3c5;
+  --border-color: rgba(255, 255, 255, 0.12);
+  --surface-highlight: rgba(255, 255, 255, 0.08);
+  --surface-shadow: rgba(0, 0, 0, 0.42);
+  --surface-glow: rgba(74, 222, 128, 0.12);
 
   /* 进度条颜色 */
-  --progress-green: #4ade80;
-  --progress-yellow: #facc15;
-  --progress-red: #f87171;
-  --progress-bg: rgba(255, 255, 255, 0.1);
+  --progress-green: #45d483;
+  --progress-green-soft: #91f2b5;
+  --progress-yellow: #f4c94b;
+  --progress-yellow-soft: #ffe58d;
+  --progress-red: #f06c78;
+  --progress-red-soft: #ffb0b7;
+  --progress-bg: rgba(255, 255, 255, 0.12);
 
   /* 尺寸 */
   --window-width: 320px;
@@ -21,8 +27,8 @@
   --handle-width: 24px;
 
   /* 动画 */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
+  --transition-fast: 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-normal: 320ms cubic-bezier(0.22, 1, 0.36, 1);
 
   /* 毛玻璃 */
   --blur-amount: 20px;

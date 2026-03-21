@@ -14,16 +14,20 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
   color: var(--text-primary);
   cursor: pointer;
-  backdrop-filter: blur(calc(var(--blur-amount) * 0.7));
+  opacity: 0.94;
+  backdrop-filter: blur(calc(var(--blur-amount) * 0.7)) saturate(150%);
+  -webkit-backdrop-filter: blur(calc(var(--blur-amount) * 0.7)) saturate(150%);
   transition:
-    transform var(--transition-fast),
+    transform var(--transition-normal),
     background-color var(--transition-fast),
     border-color var(--transition-fast),
-    box-shadow var(--transition-fast);
+    box-shadow var(--transition-normal),
+    opacity var(--transition-fast);
 }
 
 .edge-handle:hover,
 .edge-handle:focus-visible {
+  opacity: 1;
   border-color: rgba(255, 255, 255, 0.18);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.08)),
