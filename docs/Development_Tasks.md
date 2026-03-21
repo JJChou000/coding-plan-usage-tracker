@@ -452,9 +452,11 @@
 
 > **前置依赖**：阶段 1（主进程），阶段 2（UI 组件），阶段 3（Provider）
 
+- [ ] **验收记录**：2026-03-21 已完成阶段 4 自动化验收；除 4.1「真实智谱 Token 返回真实线上额度数据」因本地缺少可用 Token 仍待补充外，其余项均已通过。详见 `docs/Stage4_Acceptance_Report.md`
+
 ### 4.1 实现主进程 API 请求处理
 
-- [ ] **操作**：在 `src/main/main.ts` 中完善 `usage:fetch` IPC 处理器
+- [x] **操作**：在 `src/main/main.ts` 中完善 `usage:fetch` IPC 处理器
   - 接收 `providerId` 和认证配置
   - 根据 `providerId` 执行对应的 HTTP 请求：
     - **智谱**：使用 Node.js `https` 模块（或 Electron `net.fetch`）请求 3 个 API 端点：
@@ -465,14 +467,14 @@
     - **百炼**：当前返回空数据（Mock 在 Provider 端）
   - 将原始 JSON 响应返回给渲染进程
   - 错误处理：网络错误、超时、认证失败等，统一返回 `{ error: '错误信息' }` 格式
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 使用正确的智谱 Token 调用后，返回真实的配额数据
   2. Token 无效时返回错误信息而非崩溃
   3. 网络超时（默认 30s）后返回超时错误
 
 ### 4.2 实现 AppContext 全局状态管理
 
-- [ ] **操作**：编写 `src/renderer/context/AppContext.tsx`
+- [x] **操作**：编写 `src/renderer/context/AppContext.tsx`
   - 使用 `createContext` + `useReducer` 模式
   - **State**：`AppState`（定义在 types.ts）
   - **Actions**（reducer 处理的 action types）：
@@ -486,14 +488,14 @@
     - 初始化时调用 `window.electronAPI.getConfig()` 加载配置
     - 提供 `dispatch` 函数和 state 给子组件
   - 导出 `useAppContext()` 自定义 hook
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 子组件可以通过 `useAppContext()` 获取全局状态和 dispatch
   2. dispatch 各 action 后状态正确更新
   3. 配置变更后自动通过 IPC 持久化
 
 ### 4.3 实现自动刷新 Hook
 
-- [ ] **操作**：编写 `src/renderer/hooks/useAutoRefresh.ts`
+- [x] **操作**：编写 `src/renderer/hooks/useAutoRefresh.ts`
   - 接收 `intervalSeconds: number` 参数
   - 使用 `useEffect` + `setInterval` 实现定时轮询
   - 每次轮询：
@@ -504,7 +506,7 @@
   - 清理：组件卸载时清除 interval
   - 支持手动触发刷新的回调 `refreshNow()`
   - 实现指数退避：连续失败时增大间隔
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 应用启动后自动获取数据
   2. 每 N 秒自动刷新
   3. 网络错误时不崩溃，保留最后成功数据
@@ -512,13 +514,13 @@
 
 ### 4.4 组装 App.tsx 根组件
 
-- [ ] **操作**：修改 `src/renderer/App.tsx`
+- [x] **操作**：修改 `src/renderer/App.tsx`
   - 用 `<AppContextProvider>` 包裹
   - 渲染 `<FloatingWindow />`
   - 调用 `useAutoRefresh()` hook
   - 监听 IPC 事件 `app:refresh`（托盘刷新）→ 调用 `refreshNow()`
   - 监听 IPC 事件 `app:open-settings`（托盘设置）→ dispatch `TOGGLE_SETTINGS`
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. 应用启动后自动加载配置和数据
   2. 浮窗正确显示各厂商的额度信息
   3. 托盘菜单操作可触发对应功能

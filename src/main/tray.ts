@@ -38,7 +38,21 @@ function buildTrayMenu(getMainWindow: () => BrowserWindow | null): Electron.Menu
     {
       label: '设置',
       click: () => {
-        createSettingsWindow()
+        const settingsWindow = createSettingsWindow()
+        const notifyOpenSettings = (): void => {
+          if (settingsWindow.isDestroyed()) {
+            return
+          }
+
+          settingsWindow.webContents.send('app:open-settings')
+        }
+
+        if (settingsWindow.webContents.isLoadingMainFrame()) {
+          settingsWindow.webContents.once('did-finish-load', notifyOpenSettings)
+          return
+        }
+
+        notifyOpenSettings()
       }
     },
     { type: 'separator' },

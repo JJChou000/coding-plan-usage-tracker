@@ -185,7 +185,7 @@ function AppContent({ isSettingsRoute, previewMode }: AppContentProps): React.JS
 }
 
 function AppRuntime({ isSettingsRoute, previewMode }: AppContentProps): React.JSX.Element {
-  const { state } = useAppContext()
+  const { state, dispatch } = useAppContext()
   const { refreshNow } = useAutoRefresh({
     enabled: !previewMode,
     intervalSeconds: state.config.refreshInterval
@@ -200,6 +200,26 @@ function AppRuntime({ isSettingsRoute, previewMode }: AppContentProps): React.JS
       void refreshNow()
     })
   }, [previewMode, refreshNow])
+
+  useEffect(() => {
+    if (previewMode || typeof window.electronAPI?.onOpenSettings !== 'function') {
+      return
+    }
+
+    return window.electronAPI.onOpenSettings(() => {
+      if (!state.settingsOpen) {
+        dispatch({ type: 'TOGGLE_SETTINGS' })
+      }
+    })
+  }, [dispatch, previewMode, state.settingsOpen])
+
+  useEffect(() => {
+    if (!isSettingsRoute || state.settingsOpen) {
+      return
+    }
+
+    dispatch({ type: 'TOGGLE_SETTINGS' })
+  }, [dispatch, isSettingsRoute, state.settingsOpen])
 
   return <AppContent isSettingsRoute={isSettingsRoute} previewMode={previewMode} />
 }

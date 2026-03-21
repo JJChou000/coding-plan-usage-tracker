@@ -5,6 +5,7 @@ import { useAppContext } from '../context/AppContext'
 import { getProvider } from '../providers/providerRegistry'
 
 const RETRY_DELAYS_MS = [30_000, 60_000, 300_000] as const
+const REFRESH_TICK_MS = 1_000
 
 function getRetryDelayMs(failureCount: number, intervalSeconds: number): number {
   if (failureCount <= 0) {
@@ -37,6 +38,49 @@ function applyCheckedDimensions(
   }
 }
 
+function buildProviderErrorMessage(providerId: string, error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message
+  }
+
+  return `Failed to refresh provider: ${providerId}`
+}
+
+function mergeWithPreviousSuccess(
+  previousData: ProviderUsageData | undefined,
+  nextData: ProviderUsageData
+): ProviderUsageData {
+  if (!nextData.error || nextData.dimensions.length > 0 || !previousData) {
+    return nextData
+  }
+
+  // Preserve the last successful quota bars while surfacing the latest error state.
+  return {
+    ...previousData,
+    error: nextData.error
+  }
+}
+
+function createErrorUsageData(
+  providerId: string,
+  error: string,
+  previousData?: ProviderUsageData
+): ProviderUsageData {
+  if (!previousData) {
+    return {
+      providerId,
+      dimensions: [],
+      lastUpdated: Date.now(),
+      error
+    }
+  }
+
+  return {
+    ...previousData,
+    error
+  }
+}
+
 export interface UseAutoRefreshOptions {
   enabled?: boolean
   intervalSeconds: number
@@ -51,104 +95,145 @@ export function useAutoRefresh({
   intervalSeconds
 }: UseAutoRefreshOptions): UseAutoRefreshResult {
   const { state, dispatch } = useAppContext()
-  const timeoutRef = useRef<number | null>(null)
-  const failureCountRef = useRef(0)
-  const inFlightRef = useRef(false)
+  const intervalIdRef = useRef<number | null>(null)
   const providersRef = useRef(state.config.providers)
+  const usageDataRef = useRef(state.usageData)
+  const intervalSecondsRef = useRef(intervalSeconds)
+  const failureCountRef = useRef(0)
+  const nextRefreshAtRef = useRef(Date.now())
+  const inFlightPromiseRef = useRef<Promise<void> | null>(null)
 
   useEffect(() => {
     providersRef.current = state.config.providers
   }, [state.config.providers])
 
-  const clearScheduledRefresh = (): void => {
-    if (timeoutRef.current === null) {
+  useEffect(() => {
+    usageDataRef.current = state.usageData
+  }, [state.usageData])
+
+  useEffect(() => {
+    intervalSecondsRef.current = intervalSeconds
+  }, [intervalSeconds])
+
+  const clearRefreshInterval = (): void => {
+    if (intervalIdRef.current === null) {
       return
     }
 
-    window.clearTimeout(timeoutRef.current)
-    timeoutRef.current = null
+    window.clearInterval(intervalIdRef.current)
+    intervalIdRef.current = null
   }
 
   const refreshNow = useCallback(async (): Promise<void> => {
-    if (!enabled || inFlightRef.current) {
+    if (!enabled && inFlightPromiseRef.current === null) {
       return
     }
 
-    const enabledProviders = providersRef.current.filter((config) => config.enabled)
-
-    if (enabledProviders.length === 0) {
-      dispatch({ type: 'SET_LOADING', payload: false })
-      return
+    if (inFlightPromiseRef.current) {
+      return inFlightPromiseRef.current
     }
 
-    inFlightRef.current = true
-    dispatch({ type: 'SET_LOADING', payload: true })
+    const refreshTask = (async (): Promise<void> => {
+      const enabledProviders = providersRef.current.filter((config) => config.enabled)
 
-    let hasError = false
+      if (enabledProviders.length === 0) {
+        failureCountRef.current = 0
+        nextRefreshAtRef.current = Date.now() + intervalSecondsRef.current * 1000
+        dispatch({ type: 'SET_LOADING', payload: false })
+        return
+      }
+
+      dispatch({ type: 'SET_LOADING', payload: true })
+
+      let hasError = false
+
+      try {
+        await Promise.all(
+          enabledProviders.map(async (config) => {
+            const provider = getProvider(config.providerId)
+            const previousData = usageDataRef.current.get(config.providerId)
+
+            if (!provider) {
+              hasError = true
+              dispatch({
+                type: 'SET_USAGE_DATA',
+                payload: createErrorUsageData(
+                  config.providerId,
+                  `Provider not found: ${config.providerId}`,
+                  previousData
+                )
+              })
+              return
+            }
+
+            try {
+              const result = await provider.fetchUsage(config.auth)
+              const normalizedResult = applyCheckedDimensions(config, result)
+              const mergedResult = mergeWithPreviousSuccess(previousData, normalizedResult)
+
+              if (mergedResult.error) {
+                hasError = true
+              }
+
+              dispatch({
+                type: 'SET_USAGE_DATA',
+                payload: mergedResult
+              })
+            } catch (error) {
+              hasError = true
+              dispatch({
+                type: 'SET_USAGE_DATA',
+                payload: createErrorUsageData(
+                  config.providerId,
+                  buildProviderErrorMessage(config.providerId, error),
+                  previousData
+                )
+              })
+            }
+          })
+        )
+      } finally {
+        failureCountRef.current = hasError ? failureCountRef.current + 1 : 0
+        nextRefreshAtRef.current =
+          Date.now() + getRetryDelayMs(failureCountRef.current, intervalSecondsRef.current)
+        dispatch({ type: 'SET_LOADING', payload: false })
+      }
+    })()
+
+    inFlightPromiseRef.current = refreshTask
 
     try {
-      await Promise.all(
-        enabledProviders.map(async (config) => {
-          const provider = getProvider(config.providerId)
-
-          if (!provider) {
-            hasError = true
-            dispatch({
-              type: 'SET_USAGE_DATA',
-              payload: {
-                providerId: config.providerId,
-                dimensions: [],
-                lastUpdated: Date.now(),
-                error: `未找到 provider: ${config.providerId}`
-              }
-            })
-            return
-          }
-
-          const result = await provider.fetchUsage(config.auth)
-          const normalizedResult = applyCheckedDimensions(config, result)
-
-          if (normalizedResult.error) {
-            hasError = true
-          }
-
-          dispatch({
-            type: 'SET_USAGE_DATA',
-            payload: normalizedResult
-          })
-        })
-      )
-    } catch {
-      hasError = true
+      await refreshTask
     } finally {
-      failureCountRef.current = hasError ? failureCountRef.current + 1 : 0
-      dispatch({ type: 'SET_LOADING', payload: false })
-      inFlightRef.current = false
+      if (inFlightPromiseRef.current === refreshTask) {
+        inFlightPromiseRef.current = null
+      }
     }
   }, [dispatch, enabled])
 
   useEffect(() => {
+    clearRefreshInterval()
+
     if (!enabled) {
-      clearScheduledRefresh()
+      dispatch({ type: 'SET_LOADING', payload: false })
       return
     }
 
-    const scheduleNextRefresh = (): void => {
-      clearScheduledRefresh()
-      timeoutRef.current = window.setTimeout(
-        () => {
-          void refreshNow().finally(scheduleNextRefresh)
-        },
-        getRetryDelayMs(failureCountRef.current, intervalSeconds)
-      )
-    }
+    nextRefreshAtRef.current = Date.now()
+    void refreshNow()
 
-    void refreshNow().finally(scheduleNextRefresh)
+    intervalIdRef.current = window.setInterval(() => {
+      if (Date.now() < nextRefreshAtRef.current) {
+        return
+      }
+
+      void refreshNow()
+    }, REFRESH_TICK_MS)
 
     return () => {
-      clearScheduledRefresh()
+      clearRefreshInterval()
     }
-  }, [enabled, intervalSeconds, refreshNow, state.config.providers])
+  }, [dispatch, enabled, intervalSeconds, refreshNow, state.config.providers])
 
   return {
     refreshNow

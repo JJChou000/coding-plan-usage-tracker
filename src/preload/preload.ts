@@ -4,8 +4,8 @@ import type { AppConfig, ProviderUsageData } from '../shared/types'
 const electronAPI = {
   getConfig: () => ipcRenderer.invoke('config:get') as Promise<AppConfig>,
   setConfig: (config: AppConfig) => ipcRenderer.invoke('config:set', config),
-  fetchUsage: (providerId: string) =>
-    ipcRenderer.invoke('usage:fetch', providerId) as Promise<ProviderUsageData>,
+  fetchUsage: (providerId: string, authConfig?: Record<string, string>) =>
+    ipcRenderer.invoke('usage:fetch', providerId, authConfig) as Promise<unknown>,
   onUsageData: (callback: (data: ProviderUsageData) => void) =>
     ipcRenderer.on('usage:data', (_event, data: ProviderUsageData) => callback(data)),
   onConfigUpdated: (callback: (config: AppConfig) => void) => {

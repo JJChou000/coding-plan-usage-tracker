@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useReducer,
+  useRef,
   type Dispatch,
   type ReactNode
 } from 'react'
@@ -29,6 +30,10 @@ const DEFAULT_CONFIG: AppConfig = {
   windowPosition: { x: 100, y: 100 },
   windowState: 'normal',
   isExpanded: false
+}
+
+function serializeConfig(config: AppConfig): string {
+  return JSON.stringify(config)
 }
 
 function createDefaultState(): AppState {
@@ -143,16 +148,39 @@ export function AppContextProvider({
   children,
   initialState
 }: AppContextProviderProps): React.JSX.Element {
-  const [state, dispatch] = useReducer(appReducer, initialState ?? createDefaultState())
+  const resolvedInitialState = initialState ?? createDefaultState()
+  const [state, dispatch] = useReducer(appReducer, resolvedInitialState)
+  const hasConfigApi = typeof window.electronAPI?.getConfig === 'function'
+  const hasConfigUpdateListener = typeof window.electronAPI?.onConfigUpdated === 'function'
+  const hasConfigPersistenceApi = typeof window.electronAPI?.setConfig === 'function'
+  const currentConfigSnapshot = serializeConfig(state.config)
+  const currentConfigSnapshotRef = useRef(currentConfigSnapshot)
+  const syncedConfigSnapshotRef = useRef(serializeConfig(resolvedInitialState.config))
+  const pendingConfigSnapshotRef = useRef<string | null>(null)
+  const hasHydratedConfigRef = useRef(!hasConfigApi)
 
   useEffect(() => {
-    if (typeof window.electronAPI?.getConfig !== 'function') {
+    currentConfigSnapshotRef.current = currentConfigSnapshot
+  }, [currentConfigSnapshot])
+
+  useEffect(() => {
+    if (!hasConfigApi) {
       return
     }
 
     let isMounted = true
     const syncConfig = (config: AppConfig): void => {
       if (!isMounted) {
+        return
+      }
+
+      const nextSnapshot = serializeConfig(config)
+
+      syncedConfigSnapshotRef.current = nextSnapshot
+      pendingConfigSnapshotRef.current = null
+      hasHydratedConfigRef.current = true
+
+      if (nextSnapshot === currentConfigSnapshotRef.current) {
         return
       }
 
@@ -165,15 +193,71 @@ export function AppContextProvider({
     void window.electronAPI
       .getConfig()
       .then(syncConfig)
-      .catch(() => undefined)
+      .catch((error) => {
+        hasHydratedConfigRef.current = true
 
-    const unsubscribe = window.electronAPI.onConfigUpdated(syncConfig)
+        if (import.meta.env.DEV) {
+          console.error('Failed to load app config from main process.', error)
+        }
+      })
+
+    const unsubscribe = hasConfigUpdateListener
+      ? window.electronAPI.onConfigUpdated(syncConfig)
+      : () => undefined
 
     return () => {
       isMounted = false
       unsubscribe()
     }
-  }, [])
+  }, [hasConfigApi, hasConfigUpdateListener])
+
+  useEffect(() => {
+    if (!hasConfigPersistenceApi || !hasHydratedConfigRef.current) {
+      return
+    }
+
+    if (
+      currentConfigSnapshot === syncedConfigSnapshotRef.current ||
+      currentConfigSnapshot === pendingConfigSnapshotRef.current
+    ) {
+      return
+    }
+
+    pendingConfigSnapshotRef.current = currentConfigSnapshot
+
+    let isCancelled = false
+
+    void window.electronAPI
+      .setConfig(state.config)
+      .then(() => {
+        if (isCancelled) {
+          return
+        }
+
+        syncedConfigSnapshotRef.current = currentConfigSnapshot
+
+        if (pendingConfigSnapshotRef.current === currentConfigSnapshot) {
+          pendingConfigSnapshotRef.current = null
+        }
+      })
+      .catch((error) => {
+        if (isCancelled) {
+          return
+        }
+
+        if (pendingConfigSnapshotRef.current === currentConfigSnapshot) {
+          pendingConfigSnapshotRef.current = null
+        }
+
+        if (import.meta.env.DEV) {
+          console.error('Failed to persist app config.', error)
+        }
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [currentConfigSnapshot, hasConfigPersistenceApi, state.config])
 
   return <AppContext.Provider value={{ state, dispatch }}>{children}</AppContext.Provider>
 }

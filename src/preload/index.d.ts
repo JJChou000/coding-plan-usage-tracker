@@ -3,7 +3,7 @@ import type { AppConfig, ProviderUsageData } from '../shared/types'
 export interface ElectronAPI {
   getConfig: () => Promise<AppConfig>
   setConfig: (config: AppConfig) => Promise<void>
-  fetchUsage: (providerId: string) => Promise<ProviderUsageData>
+  fetchUsage: (providerId: string, authConfig?: Record<string, string>) => Promise<unknown>
   onUsageData: (callback: (data: ProviderUsageData) => void) => void
   onConfigUpdated: (callback: (config: AppConfig) => void) => () => void
   setWindowPosition: (pos: { x: number; y: number }) => void

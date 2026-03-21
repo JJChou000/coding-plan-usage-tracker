@@ -21,19 +21,6 @@ interface ZhipuUsageLimit {
   nextResetTime?: number | string | null
 }
 
-interface ZhipuQuotaLimitResponse {
-  data?: {
-    limits?: ZhipuUsageLimit[] | null
-  } | null
-  limits?: ZhipuUsageLimit[] | null
-  error?: string
-}
-
-interface ZhipuUsageEnvelope {
-  quotaLimit?: ZhipuQuotaLimitResponse | null
-  error?: string
-}
-
 export interface ZhipuUsageRequestConfig {
   providerId: typeof ZHIPU_PROVIDER_ID
   baseUrl: typeof ZHIPU_BASE_URL
@@ -47,7 +34,7 @@ export interface ZhipuUsageRequestConfig {
   }
 }
 
-type ZhipuRawUsageResponse = ProviderUsageData | ZhipuQuotaLimitResponse | ZhipuUsageEnvelope
+type ZhipuRawUsageResponse = unknown
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -256,7 +243,9 @@ const zhipuProvider: IProvider = {
 
     const requestConfig = buildZhipuUsageRequest(authConfig)
 
-    const rawResponse = await window.electronAPI.fetchUsage(requestConfig.providerId)
+    const rawResponse = await window.electronAPI.fetchUsage(requestConfig.providerId, {
+      authToken: requestConfig.headers.Authorization
+    })
 
     return parseZhipuUsageResponse(rawResponse)
   }

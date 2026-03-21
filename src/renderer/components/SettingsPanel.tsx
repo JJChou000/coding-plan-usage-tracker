@@ -77,14 +77,6 @@ async function persistConfig(
   nextConfig: AppConfig,
   dispatch: ReturnType<typeof useAppContext>['dispatch']
 ): Promise<boolean> {
-  if (typeof window.electronAPI?.setConfig === 'function') {
-    try {
-      await window.electronAPI.setConfig(nextConfig)
-    } catch {
-      return false
-    }
-  }
-
   dispatch({
     type: 'SET_CONFIG',
     payload: nextConfig
