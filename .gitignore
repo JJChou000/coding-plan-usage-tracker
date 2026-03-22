@@ -5,3 +5,5 @@ out
 .eslintcache
 *.log*
 docs/
+.agent/
+output/
