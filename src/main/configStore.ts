@@ -82,6 +82,7 @@ if (userDataOverride) {
 const configStore = new ElectronStore<AppConfig>({
   schema: appConfigSchema,
   defaults: defaultConfig,
+  encryptionKey: process.env['ENCRYPTION_KEY'] || 'coding-plan-tracker-default-key',
   clearInvalidConfig: true
 })
 
