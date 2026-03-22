@@ -240,7 +240,8 @@ export function createFloatingWindow(): BrowserWindow {
     backgroundColor: '#00000000',
     webPreferences: {
       preload: getPreloadPath(),
-      sandbox: false
+      sandbox: true,
+      contextIsolation: true
     }
   })
 
@@ -287,7 +288,8 @@ export function createSettingsWindow(): BrowserWindow {
     title: 'Coding Plan Usage Tracker - 设置',
     webPreferences: {
       preload: getPreloadPath(),
-      sandbox: false
+      sandbox: true,
+      contextIsolation: true
     }
   })
 
