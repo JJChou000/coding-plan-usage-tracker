@@ -1,6 +1,6 @@
 {
   "name": "coding-plan-usage-tracker",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Desktop floating tracker for AI coding plan quota usage.",
   "main": "./out/main/index.js",
   "author": "user",

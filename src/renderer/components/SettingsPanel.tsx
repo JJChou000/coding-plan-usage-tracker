@@ -20,6 +20,7 @@ type DeleteDialogState = {
 type StatusTone = 'ok' | 'error' | 'empty'
 
 const REFRESH_OPTIONS = [30, 60, 120, 300] as const
+const HIDDEN_PROVIDER_IDS = new Set(['bailian'])
 
 function getProviderFields(providerId: string): AuthField[] {
   return getProvider(providerId)?.getAuthFields() ?? []
@@ -91,7 +92,7 @@ function SettingsPanel(): React.JSX.Element {
   const [deleteDialog, setDeleteDialog] = useState<DeleteDialogState | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
-  const allProviders = getAllProviders()
+  const allProviders = getAllProviders().filter((provider) => !HIDDEN_PROVIDER_IDS.has(provider.id))
   const configuredProviderIds = new Set(state.config.providers.map((config) => config.providerId))
   const availableProviders = allProviders.filter(
     (provider) => !configuredProviderIds.has(provider.id)

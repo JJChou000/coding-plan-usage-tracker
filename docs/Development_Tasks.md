@@ -630,3 +630,14 @@
   1. README 内容完整
   2. GitHub Release 中包含安装包下载链接
   3. Changelog 记录了 v0.1.0 的所有功能
+
+### 6.5 发布后收尾整理
+
+- [x] **操作**：
+  1. 更新 `.gitignore`，将 `docs/` 加入忽略规则，仅影响后续新增的未跟踪文档文件
+  2. 修改 `src/renderer/components/SettingsPanel.tsx`，从“添加厂商”的可选列表中隐藏 `bailian`，但保留 Provider 注册、主进程分支和已有配置兼容性，以便后续恢复开发
+- [x] **验收标准**：
+  1. `.gitignore` 包含 `docs/` 规则
+  2. 新增厂商弹窗不再出现 `bailian` 可选项
+  3. 已有 `bailian` 配置仍可继续在设置面板中显示和编辑
+  4. `npm run typecheck` 通过
