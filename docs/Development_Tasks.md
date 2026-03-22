@@ -577,7 +577,7 @@
 
 ### 6.1 配置 electron-builder
 
-- [ ] **操作**：创建/修改 `electron-builder.yml`
+- [x] **操作**：创建/修改 `electron-builder.yml`
   ```yaml
   appId: com.codingplan.usagetracker
   productName: Coding Plan Usage Tracker
@@ -594,20 +594,20 @@
     createDesktopShortcut: true
     createStartMenuShortcut: true
   ```
-- [ ] **验收标准**：配置文件无语法错误
+- [x] **验收标准**：配置文件无语法错误
 
 ### 6.2 生成应用图标
 
-- [ ] **操作**：
+- [x] **操作**：
   1. 创建 256x256 的应用图标 PNG（可使用 AI 工具生成）
   2. 保存为 `resources/icons/app-icon.png`
   3. 创建 16x16 的托盘图标 `resources/icons/tray-icon.png`
   4. 创建各厂商图标 16x16：`zhipu.png`、`bailian.png`
-- [ ] **验收标准**：图标文件存在且尺寸正确
+- [x] **验收标准**：图标文件存在且尺寸正确
 
 ### 6.3 构建安装包
 
-- [ ] **操作**：
+- [x] **操作**：
   ```bash
   npm run build
   ```
@@ -615,18 +615,18 @@
   ```bash
   npx electron-builder --win
   ```
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. `dist/` 目录下生成 `.exe` 安装包
   2. 安装后运行正常
   3. 系统托盘图标正常显示
 
 ### 6.4 发布到 GitHub
 
-- [ ] **操作**：
+- [x] **操作**：
   1. 编写 `README.md`（包含项目简介、截图、安装方式、使用说明、厂商配置指南）
   2. 创建 GitHub Release，上传安装包
   3. 更新 `docs/Changelog.md`
-- [ ] **验收标准**：
+- [x] **验收标准**：
   1. README 内容完整
   2. GitHub Release 中包含安装包下载链接
   3. Changelog 记录了 v0.1.0 的所有功能

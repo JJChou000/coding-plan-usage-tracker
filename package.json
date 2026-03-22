@@ -1,6 +1,6 @@
 {
   "name": "coding-plan-usage-tracker",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Desktop floating tracker for AI coding plan quota usage.",
   "main": "./out/main/index.js",
   "author": "user",
@@ -14,12 +14,13 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
-    "build": "npm run typecheck && electron-vite build",
+    "build:app": "npm run typecheck && electron-vite build",
+    "build": "npm run build:app && electron-builder --win",
     "postinstall": "electron-builder install-app-deps",
-    "build:unpack": "npm run build && electron-builder --dir",
-    "build:win": "npm run build && electron-builder --win",
-    "build:mac": "electron-vite build && electron-builder --mac",
-    "build:linux": "electron-vite build && electron-builder --linux"
+    "build:unpack": "npm run build:app && electron-builder --dir",
+    "build:win": "npm run build",
+    "build:mac": "npm run build:app && electron-builder --mac",
+    "build:linux": "npm run build:app && electron-builder --linux"
   },
   "dependencies": {
     "@electron-toolkit/preload": "^3.0.2",
