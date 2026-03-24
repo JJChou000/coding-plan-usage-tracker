@@ -1,6 +1,6 @@
-import type { ProviderConfig, ProviderUsageData, QuotaDimension } from '../../shared/types'
+import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 
-import ProgressBar from './ProgressBar'
+import { formatRefreshTimeLabel, getPrimaryDimension } from './collapsedViewModel'
 import './CollapsedView.css'
 
 export interface CollapsedViewProps {
@@ -38,21 +38,6 @@ function isImageSource(icon: string): boolean {
   return /^(data:image|https?:\/\/|\.{0,2}\/|\/)/.test(icon)
 }
 
-function getPrimaryDimension(
-  provider: ProviderUsageData,
-  config: ProviderConfig
-): QuotaDimension | undefined {
-  for (const dimensionId of config.checkedDimensions) {
-    const dimension = provider.dimensions.find((item) => item.id === dimensionId)
-
-    if (dimension) {
-      return dimension
-    }
-  }
-
-  return provider.dimensions[0]
-}
-
 function CollapsedView({
   providers,
   configs,
@@ -80,7 +65,8 @@ function CollapsedView({
         providerId: provider.providerId,
         providerMeta: getProviderMeta(provider.providerId),
         primaryDimension,
-        error: provider.error
+        error: provider.error,
+        refreshTimeLabel: formatRefreshTimeLabel(provider.lastUpdated)
       }
     ]
   })
@@ -91,7 +77,7 @@ function CollapsedView({
 
   return (
     <div className="collapsed-view">
-      {rows.map(({ providerId, providerMeta, primaryDimension, error }) => (
+      {rows.map(({ providerId, providerMeta, primaryDimension, error, refreshTimeLabel }) => (
         <button
           key={providerId}
           type="button"
@@ -120,24 +106,18 @@ function CollapsedView({
             <span className="collapsed-view__name">{providerMeta.name}</span>
           </span>
 
-          <span className="collapsed-view__metric">
-            <span className="collapsed-view__bar">
-              <ProgressBar percent={primaryDimension.usedPercent} />
-            </span>
-            <strong className="collapsed-view__percent">
-              {Math.round(primaryDimension.usedPercent)}%
-            </strong>
+          <strong className="collapsed-view__metric">
+            {Math.round(primaryDimension.usedPercent)}%
+          </strong>
+
+          <span className="collapsed-view__refresh">
+            {error ? (
+              <span className="collapsed-view__status-dot" aria-hidden="true" title={error} />
+            ) : null}
+            {refreshTimeLabel ? (
+              <span className="collapsed-view__refresh-text">{refreshTimeLabel}</span>
+            ) : null}
           </span>
-
-          {error ? (
-            <span className="collapsed-view__status collapsed-view__status--error" title={error}>
-              错误
-            </span>
-          ) : null}
-
-          {primaryDimension.resetTime ? (
-            <span className="collapsed-view__reset">⏱ {primaryDimension.resetTime}</span>
-          ) : null}
         </button>
       ))}
     </div>
