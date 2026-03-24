@@ -59,7 +59,7 @@ body.is-dragging {
 
 .app-shell--settings {
   padding: 18px;
-  overflow: auto;
+  overflow: hidden;
   cursor: default;
   background:
     radial-gradient(circle at top right, rgba(74, 222, 128, 0.14), transparent 30%),
@@ -166,7 +166,21 @@ body.is-dragging {
   min-width: 0;
 }
 
+.settings-stage__panel,
 .settings-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.settings-stage__panel > .settings-panel,
+.settings-page > .settings-panel {
+  flex: 1 1 auto;
+}
+
+.settings-page {
+  width: min(100%, 920px);
+  height: 100%;
   max-width: 920px;
   margin: 0 auto;
 }

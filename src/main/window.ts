@@ -7,8 +7,10 @@ import { getConfig, setConfig } from './configStore'
 
 const FLOATING_WINDOW_WIDTH = 320
 const FLOATING_WINDOW_HEIGHT = 120
-const SETTINGS_WINDOW_WIDTH = 500
-const SETTINGS_WINDOW_HEIGHT = 400
+const SETTINGS_WINDOW_WIDTH = 960
+const SETTINGS_WINDOW_HEIGHT = 720
+const SETTINGS_WINDOW_MIN_WIDTH = 720
+const SETTINGS_WINDOW_MIN_HEIGHT = 560
 const EDGE_DOCK_THRESHOLD = 20
 const HANDLE_WIDTH = 24
 const MIN_WINDOW_WIDTH = HANDLE_WIDTH
@@ -274,6 +276,14 @@ export function createFloatingWindow(): BrowserWindow {
 
 export function createSettingsWindow(): BrowserWindow {
   if (settingsWindow && !settingsWindow.isDestroyed()) {
+    if (settingsWindow.isMinimized()) {
+      settingsWindow.restore()
+    }
+
+    if (!settingsWindow.isVisible()) {
+      settingsWindow.show()
+    }
+
     settingsWindow.focus()
     return settingsWindow
   }
@@ -281,9 +291,12 @@ export function createSettingsWindow(): BrowserWindow {
   const win = new BrowserWindow({
     width: SETTINGS_WINDOW_WIDTH,
     height: SETTINGS_WINDOW_HEIGHT,
+    minWidth: SETTINGS_WINDOW_MIN_WIDTH,
+    minHeight: SETTINGS_WINDOW_MIN_HEIGHT,
     show: false,
     frame: true,
     alwaysOnTop: false,
+    center: true,
     autoHideMenuBar: true,
     title: 'Coding Plan Usage Tracker - 设置',
     webPreferences: {
@@ -297,6 +310,10 @@ export function createSettingsWindow(): BrowserWindow {
   attachExternalLinkHandler(win)
 
   win.on('ready-to-show', () => {
+    if (!win.isMaximized()) {
+      win.maximize()
+    }
+
     win.show()
   })
 

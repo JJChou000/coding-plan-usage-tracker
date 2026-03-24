@@ -244,133 +244,135 @@ function SettingsPanel(): React.JSX.Element {
 
   return (
     <section className="settings-panel">
-      <header className="settings-panel__header">
-        <p className="settings-panel__eyebrow">Configuration Center</p>
-        <div className="settings-panel__header-row">
-          <div>
-            <h1 className="settings-panel__title">设置</h1>
-            <p className="settings-panel__description">
-              管理厂商认证信息与刷新频率，保存后会立刻同步到当前打开的窗口。
-            </p>
+      <div className="settings-panel__content">
+        <header className="settings-panel__header">
+          <p className="settings-panel__eyebrow">Configuration Center</p>
+          <div className="settings-panel__header-row">
+            <div>
+              <h1 className="settings-panel__title">设置</h1>
+              <p className="settings-panel__description">
+                管理厂商认证信息与刷新频率，保存后会立刻同步到当前打开的窗口。
+              </p>
+            </div>
+            <button
+              type="button"
+              className="settings-panel__button settings-panel__button--primary"
+              onClick={openAddDialog}
+              disabled={availableProviders.length === 0}
+            >
+              添加厂商
+            </button>
           </div>
-          <button
-            type="button"
-            className="settings-panel__button settings-panel__button--primary"
-            onClick={openAddDialog}
-            disabled={availableProviders.length === 0}
-          >
-            添加厂商
-          </button>
-        </div>
-      </header>
+        </header>
 
-      {saveError ? <div className="settings-panel__alert">{saveError}</div> : null}
+        {saveError ? <div className="settings-panel__alert">{saveError}</div> : null}
 
-      <section className="settings-panel__section">
-        <div className="settings-panel__section-head">
-          <div>
-            <h2 className="settings-panel__section-title">厂商列表</h2>
-            <p className="settings-panel__section-copy">
-              已配置 {state.config.providers.length} 个厂商
-              {availableProviders.length === 0 ? '，当前可用厂商已全部添加。' : '。'}
-            </p>
+        <section className="settings-panel__section">
+          <div className="settings-panel__section-head">
+            <div>
+              <h2 className="settings-panel__section-title">厂商列表</h2>
+              <p className="settings-panel__section-copy">
+                已配置 {state.config.providers.length} 个厂商
+                {availableProviders.length === 0 ? '，当前可用厂商已全部添加。' : '。'}
+              </p>
+            </div>
           </div>
-        </div>
 
-        {state.config.providers.length === 0 ? (
-          <div className="settings-panel__empty">
-            <strong>还没有厂商配置</strong>
-            <span>点击右上角“添加厂商”开始录入认证信息。</span>
-          </div>
-        ) : (
-          <div className="settings-panel__providers">
-            {state.config.providers.map((config) => {
-              const provider = getProvider(config.providerId)
-              const status = getStatusMeta(
-                config.providerId,
-                config,
-                state.usageData.get(config.providerId)
-              )
-              const authSummary = buildAuthSummary(config.providerId, config.auth)
+          {state.config.providers.length === 0 ? (
+            <div className="settings-panel__empty">
+              <strong>还没有厂商配置</strong>
+              <span>点击右上角“添加厂商”开始录入认证信息。</span>
+            </div>
+          ) : (
+            <div className="settings-panel__providers">
+              {state.config.providers.map((config) => {
+                const provider = getProvider(config.providerId)
+                const status = getStatusMeta(
+                  config.providerId,
+                  config,
+                  state.usageData.get(config.providerId)
+                )
+                const authSummary = buildAuthSummary(config.providerId, config.auth)
 
-              return (
-                <article key={config.providerId} className="settings-panel__card">
-                  <div className="settings-panel__card-head">
-                    <div className="settings-panel__provider">
-                      <span className="settings-panel__icon" aria-hidden="true">
-                        {provider?.icon ?? '·'}
-                      </span>
-                      <div className="settings-panel__provider-copy">
-                        <strong className="settings-panel__provider-name">
-                          {provider?.name ?? config.providerId}
-                        </strong>
-                        <span className="settings-panel__provider-id">{config.providerId}</span>
+                return (
+                  <article key={config.providerId} className="settings-panel__card">
+                    <div className="settings-panel__card-head">
+                      <div className="settings-panel__provider">
+                        <span className="settings-panel__icon" aria-hidden="true">
+                          {provider?.icon ?? '·'}
+                        </span>
+                        <div className="settings-panel__provider-copy">
+                          <strong className="settings-panel__provider-name">
+                            {provider?.name ?? config.providerId}
+                          </strong>
+                          <span className="settings-panel__provider-id">{config.providerId}</span>
+                        </div>
                       </div>
+
+                      <span
+                        className={`settings-panel__status settings-panel__status--${status.tone}`}
+                      >
+                        {status.label}
+                      </span>
                     </div>
 
-                    <span
-                      className={`settings-panel__status settings-panel__status--${status.tone}`}
-                    >
-                      {status.label}
-                    </span>
-                  </div>
+                    <ul className="settings-panel__meta">
+                      {authSummary.map((item) => (
+                        <li key={item}>{item}</li>
+                      ))}
+                    </ul>
 
-                  <ul className="settings-panel__meta">
-                    {authSummary.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+                    {state.usageData.get(config.providerId)?.error ? (
+                      <p className="settings-panel__error">
+                        {state.usageData.get(config.providerId)?.error}
+                      </p>
+                    ) : null}
 
-                  {state.usageData.get(config.providerId)?.error ? (
-                    <p className="settings-panel__error">
-                      {state.usageData.get(config.providerId)?.error}
-                    </p>
-                  ) : null}
+                    <div className="settings-panel__actions">
+                      <button
+                        type="button"
+                        className="settings-panel__button settings-panel__button--ghost"
+                        onClick={() => openEditDialog(config.providerId)}
+                      >
+                        编辑
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-panel__button settings-panel__button--danger"
+                        onClick={() => setDeleteDialog({ providerId: config.providerId })}
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
+          )}
+        </section>
 
-                  <div className="settings-panel__actions">
-                    <button
-                      type="button"
-                      className="settings-panel__button settings-panel__button--ghost"
-                      onClick={() => openEditDialog(config.providerId)}
-                    >
-                      编辑
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-panel__button settings-panel__button--danger"
-                      onClick={() => setDeleteDialog({ providerId: config.providerId })}
-                    >
-                      删除
-                    </button>
-                  </div>
-                </article>
-              )
-            })}
+        <footer className="settings-panel__footer">
+          <div>
+            <h2 className="settings-panel__section-title">刷新频率</h2>
+            <p className="settings-panel__section-copy">支持 30 秒到 5 分钟之间的常用档位。</p>
           </div>
-        )}
-      </section>
 
-      <footer className="settings-panel__footer">
-        <div>
-          <h2 className="settings-panel__section-title">刷新频率</h2>
-          <p className="settings-panel__section-copy">支持 30 秒到 5 分钟之间的常用档位。</p>
-        </div>
-
-        <label className="settings-panel__select-wrap">
-          <span className="settings-panel__select-label">自动刷新</span>
-          <select
-            className="settings-panel__select"
-            value={state.config.refreshInterval}
-            onChange={(event) => void handleRefreshChange(Number(event.target.value))}
-          >
-            {REFRESH_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}s
-              </option>
-            ))}
-          </select>
-        </label>
-      </footer>
+          <label className="settings-panel__select-wrap">
+            <span className="settings-panel__select-label">自动刷新</span>
+            <select
+              className="settings-panel__select"
+              value={state.config.refreshInterval}
+              onChange={(event) => void handleRefreshChange(Number(event.target.value))}
+            >
+              {REFRESH_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}s
+                </option>
+              ))}
+            </select>
+          </label>
+        </footer>
+      </div>
 
       {dialog ? (
         <div className="settings-panel__overlay" onClick={closeDialog}>
