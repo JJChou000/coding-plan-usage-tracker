@@ -5,7 +5,12 @@ import ElectronStoreModule, { type Schema } from 'electron-store'
 import { app } from 'electron'
 
 import type { AppConfig, ProviderConfig } from '../shared/types'
-import { DEFAULT_WINDOW_OPACITY, normalizeWindowOpacity } from '../shared/windowOpacity'
+import {
+  DEFAULT_WINDOW_OPACITY,
+  MAX_WINDOW_OPACITY,
+  MIN_WINDOW_OPACITY,
+  normalizeWindowOpacity
+} from '../shared/windowOpacity'
 
 const defaultConfig: AppConfig = {
   providers: [],
@@ -52,8 +57,8 @@ const appConfigSchema: Schema<AppConfig> = {
   },
   windowOpacity: {
     type: 'number',
-    minimum: 0.5,
-    maximum: 1
+    minimum: MIN_WINDOW_OPACITY,
+    maximum: MAX_WINDOW_OPACITY
   },
   windowPosition: {
     type: 'object',

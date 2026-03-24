@@ -1,4 +1,4 @@
-export const MIN_WINDOW_OPACITY = 0.5
+export const MIN_WINDOW_OPACITY = 0.1
 export const MAX_WINDOW_OPACITY = 1
 export const DEFAULT_WINDOW_OPACITY = 1
 export const WINDOW_OPACITY_STEP = 0.05

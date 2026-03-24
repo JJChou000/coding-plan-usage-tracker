@@ -627,6 +627,19 @@
   4. 错误状态仅以轻量提示点呈现，不显著增加收缩态面积
   5. `npm run typecheck` 与 `npm test` 通过
 
+### 5.9 线上问题修复（Issue #24）
+
+- [x] **操作**：
+  1. 调整 `src/shared/windowOpacity.ts` 与 `src/main/configStore.ts`，将浮窗透明度最小值从 `50%` 下调到 `10%`，并保持默认值 `100%` 不变
+  2. 调整 `src/renderer/components/SettingsPanel.tsx` 的透明度滑杆范围与提示文案，使设置面板可直接配置 `10% - 100%`
+  3. 调整 `src/renderer/components/floatingWindowOpacity.ts`，为极低透明度场景保留最低可见表面层，并补充 `src/renderer/components/floatingWindowOpacity.test.ts` 回归测试
+- [x] **验收标准**：
+  1. 设置面板可以将透明度调到 `10%`
+  2. 配置可持久化，并在应用重启后恢复
+  3. `10%` 到 `100%` 区间内行为稳定
+  4. 不出现异常闪烁、点击区域错位或完全不可见的问题
+  5. `npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
