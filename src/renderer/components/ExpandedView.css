@@ -102,7 +102,7 @@
 
 .expanded-view__dimension {
   display: grid;
-  grid-template-columns: 16px minmax(64px, 92px) minmax(72px, 1fr) auto auto;
+  grid-template-columns: 16px minmax(0, 1fr) minmax(56px, 1.15fr) max-content max-content;
   align-items: center;
   gap: 8px;
   min-height: 30px;
@@ -184,8 +184,7 @@
   transform: rotate(45deg);
 }
 
-.expanded-view__label,
-.expanded-view__reset {
+.expanded-view__label {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -202,16 +201,18 @@
 }
 
 .expanded-view__percent {
-  min-width: 34px;
+  min-width: 38px;
   font-size: 12px;
   font-weight: 600;
   text-align: right;
 }
 
 .expanded-view__reset {
+  flex-shrink: 0;
   color: var(--text-secondary);
   font-size: 11px;
   text-align: right;
+  white-space: nowrap;
 }
 
 .expanded-view__reset--empty {
