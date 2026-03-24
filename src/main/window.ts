@@ -410,4 +410,7 @@ export function resizeWindow(win: BrowserWindow, width: number, height: number):
   const nextHeight = Math.max(MIN_WINDOW_HEIGHT, Math.round(height))
 
   win.setSize(nextWidth, nextHeight)
+
+  const nextPosition = ensureFloatingWindowVisible(win, getConfig().windowState)
+  setConfig({ windowPosition: nextPosition })
 }
