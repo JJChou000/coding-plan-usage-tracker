@@ -1,4 +1,5 @@
 import type { AuthField, IProvider, ProviderUsageData, QuotaDimension } from '../../shared/types'
+import zhipuIcon from '../../../resources/icons/zhipu.png'
 
 const ZHIPU_PROVIDER_ID = 'zhipu'
 const ZHIPU_BASE_URL = 'https://open.bigmodel.cn'
@@ -188,7 +189,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
     dimensions.push(
       createDimension(tokenLimit, {
         id: 'token_5h',
-        label: '每5小时 Token',
+        label: '每 5 小时 Token',
         resetTime: formatResetTime(tokenLimit.nextResetTime),
         isChecked: true
       })
@@ -227,7 +228,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
 const zhipuProvider: IProvider = {
   id: ZHIPU_PROVIDER_ID,
   name: '智谱 CodeGeeX',
-  icon: '🔸',
+  icon: zhipuIcon,
   getAuthFields(): AuthField[] {
     return ZHIPU_AUTH_FIELDS
   },
@@ -242,7 +243,6 @@ const zhipuProvider: IProvider = {
     }
 
     const requestConfig = buildZhipuUsageRequest(authConfig)
-
     const rawResponse = await window.electronAPI.fetchUsage(requestConfig.providerId, {
       authToken: requestConfig.headers.Authorization
     })

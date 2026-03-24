@@ -21,7 +21,7 @@ function createProviderUsageData(): ProviderUsageData {
     dimensions: [
       {
         id: 'token_5h',
-        label: '每5小时 Token',
+        label: '每 5 小时 Token',
         usedPercent: 31,
         used: 62000,
         total: 200000,
@@ -50,17 +50,18 @@ describe('CollapsedView helpers', () => {
   })
 
   it('formats refresh time from provider lastUpdated instead of quota resetTime', () => {
-    expect(formatRefreshTimeLabel(createProviderUsageData().lastUpdated, 'UTC')).toBe('刷新 09:07')
+    expect(formatRefreshTimeLabel(createProviderUsageData().lastUpdated, 'UTC')).toBe('09:07')
   })
 })
 
 describe('floating window collapsed layout', () => {
-  it('uses a narrower width in collapsed mode than in expanded mode', () => {
+  it('keeps the collapsed width compact enough for the denser layout', () => {
     const provider = createProviderUsageData()
 
     const collapsedSize = getFloatingSize(false, 'normal', [provider])
     const expandedSize = getFloatingSize(true, 'normal', [provider])
 
+    expect(collapsedSize.width).toBe(224)
     expect(collapsedSize.width).toBeLessThan(expandedSize.width)
   })
 })
