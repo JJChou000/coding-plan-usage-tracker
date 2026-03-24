@@ -613,6 +613,18 @@
   2. 点击另一个维度后，旧选项自动取消，新选项成为唯一选中项
   3. 旧配置若存在多个 `checkedDimensions`，加载或刷新后会稳定收敛为一个有效展示项
   4. 收缩态始终与唯一选中维度保持一致
+
+### 5.8 线上问题修复（Issue #15）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/CollapsedView.tsx`，将收缩态展示信息收敛为厂商、主用量和最近刷新时间，不再显示进度条与额度重置时间
+  2. 调整 `src/renderer/components/CollapsedView.css` 与 `src/renderer/components/floatingWindowLayout.ts`，同步压缩收缩态横向布局与窗口宽度，降低桌面常驻干扰
+  3. 新增 `src/renderer/components/CollapsedView.test.ts`，覆盖主维度选择、刷新时间文案与收缩态宽度回归测试
+- [x] **验收标准**：
+  1. 收缩态每个厂商只展示“厂商 / 用量 / 刷新时间”三类信息
+  2. 收缩态整体横向占用明显缩小，不再出现当前的多列拥挤展示
+  3. 展开态展示逻辑与交互保持不变
+  4. 错误状态仅以轻量提示点呈现，不显著增加收缩态面积
   5. `npm run typecheck` 与 `npm test` 通过
 
 ## 阶段 6：打包与发布

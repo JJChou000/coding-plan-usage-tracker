@@ -14,7 +14,8 @@ export type FloatingWindowSize = {
 }
 
 export const FLOATING_WINDOW_LAYOUT = {
-  windowWidth: 320,
+  collapsedWindowWidth: 248,
+  expandedWindowWidth: 320,
   collapsedRowHeight: 36,
   expandedHeaderHeight: 36,
   expandedDimensionHeight: 30,
@@ -106,7 +107,9 @@ export function getFloatingSize(
   }
 
   return {
-    width: FLOATING_WINDOW_LAYOUT.windowWidth,
+    width: isExpanded
+      ? FLOATING_WINDOW_LAYOUT.expandedWindowWidth
+      : FLOATING_WINDOW_LAYOUT.collapsedWindowWidth,
     height: isExpanded ? expandedHeight : collapsedHeight,
     handleLength
   }
