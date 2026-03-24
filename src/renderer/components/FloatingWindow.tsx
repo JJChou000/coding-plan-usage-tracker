@@ -2,6 +2,7 @@ import { useRef, type CSSProperties } from 'react'
 
 import { useAppContext } from '../context/AppContext'
 import { useWindowDrag } from '../hooks/useWindowDrag'
+import { getDockedHandleDisplay } from './collapsedViewModel'
 import { buildFloatingWindowSurfaceVars } from './floatingWindowOpacity'
 import EdgeHandle from './EdgeHandle'
 import FloatingWindowContent from './FloatingWindowContent'
@@ -18,6 +19,7 @@ function FloatingWindow(): React.JSX.Element {
   const providers = providerStates.filter((provider) => provider.dimensions.length > 0)
   const hasVisibleProviders = providers.length > 0
   const providerErrors = getProviderErrors(state.config.providers, state.usageData)
+  const dockedHandleDisplay = getDockedHandleDisplay(state.config.providers, providerStates)
   const currentSize = getFloatingSize(
     state.config.isExpanded,
     state.config.windowState,
@@ -78,6 +80,7 @@ function FloatingWindow(): React.JSX.Element {
         <div className="floating-window__handle">
           <EdgeHandle
             side={dockSide.replace('docked-', '') as 'left' | 'right' | 'top' | 'bottom'}
+            usageLabel={dockedHandleDisplay.text}
             onClick={handleRestore}
           />
         </div>

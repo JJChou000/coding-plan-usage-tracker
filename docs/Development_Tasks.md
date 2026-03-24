@@ -627,6 +627,20 @@
   4. 错误状态仅以轻量提示点呈现，不显著增加收缩态面积
   5. `npm run typecheck` 与 `npm test` 通过
 
+### 5.9 线上问题修复（Issue #23）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/EdgeHandle.tsx` 与 `EdgeHandle.css`，让吸附态优先显示当前主用量百分比，并在无可用数据时回退为 `--`
+  2. 在 `src/renderer/components/collapsedViewModel.ts` 中新增吸附态 selector，沿用收缩态“第一条可见厂商 + 主维度”的稳定选择规则
+  3. 调整 `src/renderer/components/FloatingWindow.tsx`，在吸附态下将主用量展示结果透传给 `EdgeHandle`
+  4. 新增 `src/renderer/components/EdgeHandle.test.tsx`，并补充 `src/renderer/components/CollapsedView.test.ts` 回归测试，覆盖主用量展示与无数据占位逻辑
+- [x] **验收标准**：
+  1. 左右吸附时默认显示主用量百分比，例如 `31%`
+  2. 多厂商场景下始终展示第一条可见厂商的主维度百分比
+  3. 无数据或错误状态下回退为 `--`，不会显示难以理解的内容
+  4. 点击吸附态区域仍可恢复浮窗
+  5. `npm run typecheck` 与 `npm run test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
