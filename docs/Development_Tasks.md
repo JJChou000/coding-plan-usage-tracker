@@ -627,7 +627,46 @@
   4. 错误状态仅以轻量提示点呈现，不显著增加收缩态面积
   5. `npm run typecheck` 与 `npm test` 通过
 
-### 5.9 线上问题修复（Issue #24）
+### 5.9 线上问题修复（Issue #21）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/CollapsedView.tsx` 与 `CollapsedView.css`，将折叠态收敛为更紧凑的三列布局，压缩 gap、padding 和百分比展示占位
+  2. 修改 `src/renderer/components/collapsedViewModel.ts`，将最后刷新时间文案从“刷新 HH:mm”收敛为纯时间 `HH:mm`
+  3. 调整 `src/renderer/components/floatingWindowLayout.ts`，同步收紧折叠态窗口宽度，并通过 `CollapsedView.test.ts` 固化时间文案与紧凑宽度回归
+- [x] **验收标准**：
+  1. 折叠态同时展示厂商、主百分比、最后刷新时间时，中间留白明显减少
+  2. `0%`、`31%`、`100%` 等长度变化时百分比列保持稳定右对齐
+  3. 刷新时间展示为紧凑的 `HH:mm`，错误状态仅以轻量提示点呈现
+  4. 多厂商列表下窗口尺寸计算仍然正确
+  5. `npm run typecheck` 与 `npm test` 通过
+
+### 5.10 线上问题修复（Issue #22）
+
+- [x] **操作**：
+  1. 将 `resources/icons/zhipu.png` 与 `resources/icons/bailian.png` 接入 provider 定义，替换 `zhipu` 原先的 emoji 图标
+  2. 新增统一的 `src/renderer/providers/providerDisplay.ts` 与 `src/renderer/components/ProviderIcon.tsx`，收敛厂商名称、图标和 fallback 逻辑
+  3. 让 `CollapsedView.tsx`、`ExpandedView.tsx`、`SettingsPanel.tsx` 统一复用同一套 provider 图标元数据与渲染逻辑
+- [x] **验收标准**：
+  1. 智谱不再显示 emoji，占位统一使用实际 Logo 资源
+  2. 折叠态、展开态、设置面板中的智谱图标保持一致
+  3. 图标资源加载异常时会自动回退到文本占位，界面不会崩溃
+  4. `providerRegistry.test.ts`、`zhipuProvider.test.ts`、`CollapsedView.test.ts`、`npm run typecheck` 与 `npm test` 通过
+
+### 5.11 线上问题修复（Issue #23）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/EdgeHandle.tsx` 与 `EdgeHandle.css`，让吸附态优先显示当前主用量百分比，并在无可用数据时回退为 `--`
+  2. 在 `src/renderer/components/collapsedViewModel.ts` 中新增吸附态 selector，沿用收缩态“第一条可见厂商 + 主维度”的稳定选择规则
+  3. 调整 `src/renderer/components/FloatingWindow.tsx`，在吸附态下将主用量展示结果透传给 `EdgeHandle`
+  4. 新增 `src/renderer/components/EdgeHandle.test.tsx`，并补充 `src/renderer/components/CollapsedView.test.ts` 回归测试，覆盖主用量展示与无数据占位逻辑
+- [x] **验收标准**：
+  1. 左右吸附时默认显示主用量百分比，例如 `31%`
+  2. 多厂商场景下始终展示第一条可见厂商的主维度百分比
+  3. 无数据或错误状态下回退为 `--`，不会显示难以理解的内容
+  4. 点击吸附态区域仍可恢复浮窗
+  5. `npm run typecheck` 与 `npm run test` 通过
+
+### 5.12 线上问题修复（Issue #24）
 
 - [x] **操作**：
   1. 调整 `src/shared/windowOpacity.ts` 与 `src/main/configStore.ts`，将浮窗透明度最小值从 `50%` 下调到 `10%`，并保持默认值 `100%` 不变
