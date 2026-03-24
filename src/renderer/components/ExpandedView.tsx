@@ -134,10 +134,13 @@ function ExpandedView({
             </span>
           </button>
 
-          <div className="expanded-view__dimensions">
+          <div
+            className="expanded-view__dimensions"
+            role="radiogroup"
+            aria-label={`${providerMeta.name} 折叠态展示维度`}
+          >
             {provider.dimensions.map((dimension) => {
-              const isChecked = config.checkedDimensions.includes(dimension.id)
-              const isLastCheckedDimension = isChecked && config.checkedDimensions.length === 1
+              const isChecked = config.checkedDimensions[0] === dimension.id
 
               return (
                 <div
@@ -156,14 +159,13 @@ function ExpandedView({
                   >
                     <button
                       type="button"
-                      role="checkbox"
+                      role="radio"
                       aria-checked={isChecked}
-                      aria-label={`在折叠态显示 ${providerMeta.name} 的 ${dimension.label}`}
+                      aria-label={`将 ${providerMeta.name} 的 ${dimension.label} 设为折叠态展示项`}
                       className={`expanded-view__checkbox-wrap${
                         isChecked ? ' expanded-view__checkbox-wrap--checked' : ''
                       }`}
                       data-no-drag="true"
-                      disabled={isLastCheckedDimension}
                       onMouseDown={stopInteractionPropagation}
                       onClick={(event) => {
                         event.stopPropagation()

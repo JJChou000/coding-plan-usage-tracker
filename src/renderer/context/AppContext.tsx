@@ -32,6 +32,56 @@ const DEFAULT_CONFIG: AppConfig = {
   isExpanded: false
 }
 
+function dedupeDimensionIds(dimensionIds: string[]): string[] {
+  return Array.from(new Set(dimensionIds.filter((dimensionId) => dimensionId.trim().length > 0)))
+}
+
+export function normalizeCheckedDimensions(
+  checkedDimensions: string[],
+  availableDimensionIds: string[]
+): string[] {
+  const uniqueCheckedDimensions = dedupeDimensionIds(checkedDimensions)
+
+  if (availableDimensionIds.length === 0) {
+    return uniqueCheckedDimensions[0] ? [uniqueCheckedDimensions[0]] : []
+  }
+
+  const availableDimensionIdSet = new Set(availableDimensionIds)
+
+  for (const dimensionId of uniqueCheckedDimensions) {
+    if (availableDimensionIdSet.has(dimensionId)) {
+      return [dimensionId]
+    }
+  }
+
+  return availableDimensionIds[0] ? [availableDimensionIds[0]] : []
+}
+
+function syncUsageDataCheckedDimensions(
+  usageData: ProviderUsageData,
+  checkedDimensions: string[]
+): ProviderUsageData {
+  const checkedDimensionSet = new Set(checkedDimensions)
+
+  return {
+    ...usageData,
+    dimensions: usageData.dimensions.map((dimension) => ({
+      ...dimension,
+      isChecked: checkedDimensionSet.has(dimension.id)
+    }))
+  }
+}
+
+function normalizeProvidersConfig(config: AppConfig): AppConfig {
+  return {
+    ...config,
+    providers: config.providers.map((providerConfig) => ({
+      ...providerConfig,
+      checkedDimensions: normalizeCheckedDimensions(providerConfig.checkedDimensions, [])
+    }))
+  }
+}
+
 function serializeConfig(config: AppConfig): string {
   return JSON.stringify(config)
 }
@@ -46,15 +96,15 @@ function createDefaultState(): AppState {
 }
 
 function mergeConfig(currentConfig: AppConfig, patch: Partial<AppConfig>): AppConfig {
-  return {
+  return normalizeProvidersConfig({
     ...currentConfig,
     ...patch,
     windowPosition: patch.windowPosition ?? currentConfig.windowPosition,
     providers: patch.providers ?? currentConfig.providers
-  }
+  })
 }
 
-function appReducer(state: AppState, action: AppAction): AppState {
+export function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_CONFIG':
       return {
@@ -65,29 +115,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const providerConfig = state.config.providers.find(
         (config) => config.providerId === action.payload.providerId
       )
-      const shouldSeedCheckedDimensions =
+      const availableDimensionIds = action.payload.dimensions.map((dimension) => dimension.id)
+      const checkedDimensions = providerConfig
+        ? normalizeCheckedDimensions(providerConfig.checkedDimensions, availableDimensionIds)
+        : []
+      const shouldSyncCheckedDimensions =
         Boolean(providerConfig) &&
-        providerConfig!.checkedDimensions.length === 0 &&
-        action.payload.dimensions.length > 0
-      const checkedDimensions = shouldSeedCheckedDimensions
-        ? [action.payload.dimensions[0].id]
-        : (providerConfig?.checkedDimensions ?? [])
+        checkedDimensions.length === 1 &&
+        providerConfig!.checkedDimensions.join('|') !== checkedDimensions.join('|')
       const nextPayload =
         checkedDimensions.length > 0
-          ? {
-              ...action.payload,
-              dimensions: action.payload.dimensions.map((dimension) => ({
-                ...dimension,
-                isChecked: checkedDimensions.includes(dimension.id)
-              }))
-            }
+          ? syncUsageDataCheckedDimensions(action.payload, checkedDimensions)
           : action.payload
       const nextUsageData = new Map(state.usageData)
       nextUsageData.set(action.payload.providerId, nextPayload)
 
       return {
         ...state,
-        config: shouldSeedCheckedDimensions
+        config: shouldSyncCheckedDimensions
           ? {
               ...state.config,
               providers: state.config.providers.map((config) =>
@@ -124,17 +169,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
           return config
         }
 
-        const isChecked = config.checkedDimensions.includes(dimensionId)
-
-        if (isChecked && config.checkedDimensions.length === 1) {
+        if (config.checkedDimensions[0] === dimensionId) {
           return config
         }
 
         return {
           ...config,
-          checkedDimensions: isChecked
-            ? config.checkedDimensions.filter((item) => item !== dimensionId)
-            : [...config.checkedDimensions, dimensionId]
+          checkedDimensions: [dimensionId]
         }
       })
 
@@ -143,18 +184,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
       if (providerUsage) {
         const activeConfig = nextProviders.find((config) => config.providerId === providerId)
-        const checkedDimensions = new Set(activeConfig?.checkedDimensions ?? [])
+        const checkedDimensions = activeConfig?.checkedDimensions ?? []
 
         nextUsageData.set(providerId, {
-          ...providerUsage,
-          dimensions: providerUsage.dimensions.map((dimension) =>
-            checkedDimensions.size > 0
-              ? {
-                  ...dimension,
-                  isChecked: checkedDimensions.has(dimension.id)
-                }
-              : dimension
-          )
+          ...(checkedDimensions.length > 0
+            ? syncUsageDataCheckedDimensions(providerUsage, checkedDimensions)
+            : providerUsage)
         })
       }
 

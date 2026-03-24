@@ -602,6 +602,19 @@
   2. 拖拽过程中位置更新经过 `requestAnimationFrame` 节流，避免每次 `mousemove` 都触发状态更新
   3. `npm run typecheck` 与 `npm run test` 通过
 
+### 5.7 线上问题修复（Issue #16）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/context/AppContext.tsx` 的维度勾选逻辑，将同一厂商的 `checkedDimensions` 收敛为唯一展示项，并兼容旧配置中存在多个维度同时勾选的情况
+  2. 调整 `src/renderer/components/ExpandedView.tsx` 的展开态交互，使点击未选中的维度时直接替换当前展示项，且已选中的维度不会被取消为“全不选”
+  3. 补充 `src/renderer/context/AppContext.test.ts` 回归测试，覆盖旧配置收敛、单选替换和唯一选中态同步
+- [x] **验收标准**：
+  1. 同一厂商在展开态中最多只能勾选一个维度
+  2. 点击另一个维度后，旧选项自动取消，新选项成为唯一选中项
+  3. 旧配置若存在多个 `checkedDimensions`，加载或刷新后会稳定收敛为一个有效展示项
+  4. 收缩态始终与唯一选中维度保持一致
+  5. `npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
