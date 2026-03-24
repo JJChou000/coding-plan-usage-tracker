@@ -78,7 +78,7 @@
 }
 
 .edge-handle__content--vertical {
-  transform: rotate(-90deg);
+  transform: rotate(90deg);
 }
 
 .edge-handle__content--horizontal {

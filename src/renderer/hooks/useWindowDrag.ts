@@ -11,17 +11,22 @@ import type { AppAction } from '../context/AppContext'
 import {
   FLOATING_WINDOW_LAYOUT,
   clamp,
-  getDockedPreviewPosition,
   resolveNativeDockState,
   resolvePreviewDockState,
+  type DockState,
   type FloatingWindowSize,
   type PreviewPosition
 } from '../components/floatingWindowLayout'
 import type { AppConfig } from '../../shared/types'
-import { getNextLastNormalPosition } from './windowDragState'
+import {
+  constrainDockedWindowPosition,
+  getNextLastNormalPosition,
+  type DockedWindowBounds
+} from './windowDragState'
 
 type DragState = {
   active: boolean
+  dockState: DockState | null
   startClientX: number
   startClientY: number
   pointerOffsetX: number
@@ -64,7 +69,15 @@ function getPreviewArenaRect(element: HTMLDivElement | null): DOMRect | null {
   return element?.parentElement?.getBoundingClientRect() ?? null
 }
 
-function isIgnoredDragTarget(target: Element | null): boolean {
+function isEdgeHandleTarget(target: Element | null): boolean {
+  return Boolean(target?.closest('.edge-handle'))
+}
+
+function isIgnoredDragTarget(target: Element | null, allowEdgeHandleDrag = false): boolean {
+  if (allowEdgeHandleDrag && isEdgeHandleTarget(target)) {
+    return false
+  }
+
   return Boolean(
     target?.closest(
       'input[type="checkbox"], label, .expanded-view__checkbox-wrap, .edge-handle, [data-no-drag="true"]'
@@ -101,6 +114,24 @@ function getNativeDragPosition(dragState: DragState, pointer: PointerSnapshot): 
   return {
     x: Math.round(pointer.screenX - dragState.pointerOffsetX),
     y: Math.round(pointer.screenY - dragState.pointerOffsetY)
+  }
+}
+
+function getPreviewBounds(arena: DOMRect): DockedWindowBounds {
+  return {
+    x: 0,
+    y: 0,
+    width: arena.width,
+    height: arena.height
+  }
+}
+
+function getNativeBounds(): DockedWindowBounds {
+  return {
+    x: 0,
+    y: 0,
+    width: screen.availWidth,
+    height: screen.availHeight
   }
 }
 
@@ -182,11 +213,33 @@ export function useWindowDrag({
           return
         }
 
-        setPreviewPosition(getPreviewDragPosition(dragState, pointer, arena, activeSize))
+        const nextPreviewPosition = getPreviewDragPosition(dragState, pointer, arena, activeSize)
+
+        setPreviewPosition(
+          dragState.dockState
+            ? constrainDockedWindowPosition(
+                dragState.dockState,
+                nextPreviewPosition,
+                activeSize,
+                getPreviewBounds(arena)
+              )
+            : nextPreviewPosition
+        )
         return
       }
 
-      window.electronAPI?.setWindowPosition?.(getNativeDragPosition(dragState, pointer))
+      const nextNativePosition = getNativeDragPosition(dragState, pointer)
+
+      window.electronAPI?.setWindowPosition?.(
+        dragState.dockState
+          ? constrainDockedWindowPosition(
+              dragState.dockState,
+              nextNativePosition,
+              activeSize,
+              getNativeBounds()
+            )
+          : nextNativePosition
+      )
     }
 
     const flushQueuedMove = (): void => {
@@ -240,36 +293,104 @@ export function useWindowDrag({
 
           if (arena) {
             const nextPosition = getPreviewDragPosition(dragState, pointer, arena, activeSize)
-            const nextDockState = resolvePreviewDockState(nextPosition, activeSize, arena)
+            const previewBounds = getPreviewBounds(arena)
 
-            if (nextDockState) {
-              lastNormalPositionRef.current = nextPosition
-
-              const dockedSize =
-                nextDockState === 'docked-left' || nextDockState === 'docked-right'
-                  ? {
-                      width: FLOATING_WINDOW_LAYOUT.handleWidth,
-                      height: activeSize.handleLength,
-                      handleLength: activeSize.handleLength
-                    }
-                  : {
-                      width: activeSize.handleLength,
-                      height: FLOATING_WINDOW_LAYOUT.handleWidth,
-                      handleLength: activeSize.handleLength
-                    }
-              const dockedPosition = getDockedPreviewPosition(nextDockState, arena, dockedSize)
+            if (dragState.dockState) {
+              const dockedPosition = constrainDockedWindowPosition(
+                dragState.dockState,
+                nextPosition,
+                activeSize,
+                previewBounds
+              )
 
               setPreviewPosition(dockedPosition)
               dispatch({
                 type: 'SET_CONFIG',
                 payload: {
-                  windowState: nextDockState,
+                  windowState: dragState.dockState,
                   windowPosition: dockedPosition
                 }
               })
             } else {
-              lastNormalPositionRef.current = nextPosition
-              setPreviewPosition(nextPosition)
+              const nextDockState = resolvePreviewDockState(nextPosition, activeSize, arena)
+
+              if (nextDockState) {
+                lastNormalPositionRef.current = nextPosition
+
+                const dockedSize =
+                  nextDockState === 'docked-left' || nextDockState === 'docked-right'
+                    ? {
+                        width: FLOATING_WINDOW_LAYOUT.handleWidth,
+                        height: activeSize.handleLength,
+                        handleLength: activeSize.handleLength
+                      }
+                    : {
+                        width: activeSize.handleLength,
+                        height: FLOATING_WINDOW_LAYOUT.handleWidth,
+                        handleLength: activeSize.handleLength
+                      }
+                const dockedPosition = constrainDockedWindowPosition(
+                  nextDockState,
+                  nextPosition,
+                  dockedSize,
+                  previewBounds
+                )
+
+                setPreviewPosition(dockedPosition)
+                dispatch({
+                  type: 'SET_CONFIG',
+                  payload: {
+                    windowState: nextDockState,
+                    windowPosition: dockedPosition
+                  }
+                })
+              } else {
+                lastNormalPositionRef.current = nextPosition
+                setPreviewPosition(nextPosition)
+                dispatch({
+                  type: 'SET_CONFIG',
+                  payload: {
+                    windowState: 'normal',
+                    windowPosition: nextPosition
+                  }
+                })
+              }
+            }
+          }
+        } else {
+          const nextPosition = getNativeDragPosition(dragState, pointer)
+
+          if (dragState.dockState) {
+            const dockedPosition = constrainDockedWindowPosition(
+              dragState.dockState,
+              nextPosition,
+              activeSize,
+              getNativeBounds()
+            )
+
+            window.electronAPI?.setWindowPosition?.(dockedPosition)
+            dispatch({
+              type: 'SET_CONFIG',
+              payload: {
+                windowState: dragState.dockState,
+                windowPosition: dockedPosition
+              }
+            })
+          } else {
+            const nextDockState = resolveNativeDockState(nextPosition, activeSize)
+
+            lastNormalPositionRef.current = nextPosition
+
+            if (nextDockState) {
+              window.electronAPI?.setWindowState?.(nextDockState)
+              dispatch({
+                type: 'SET_CONFIG',
+                payload: {
+                  windowState: nextDockState,
+                  windowPosition: nextPosition
+                }
+              })
+            } else {
               dispatch({
                 type: 'SET_CONFIG',
                 payload: {
@@ -278,30 +399,6 @@ export function useWindowDrag({
                 }
               })
             }
-          }
-        } else {
-          const nextPosition = getNativeDragPosition(dragState, pointer)
-          const nextDockState = resolveNativeDockState(nextPosition, activeSize)
-
-          lastNormalPositionRef.current = nextPosition
-
-          if (nextDockState) {
-            window.electronAPI?.setWindowState?.(nextDockState)
-            dispatch({
-              type: 'SET_CONFIG',
-              payload: {
-                windowState: nextDockState,
-                windowPosition: nextPosition
-              }
-            })
-          } else {
-            dispatch({
-              type: 'SET_CONFIG',
-              payload: {
-                windowState: 'normal',
-                windowPosition: nextPosition
-              }
-            })
           }
         }
       } else if (!activePreviewMode && shouldToggleExpandFromTarget(dragState.originTarget)) {
@@ -333,18 +430,19 @@ export function useWindowDrag({
   }, [dispatch, floatingRef])
 
   const handleMouseDown = (event: ReactMouseEvent<HTMLDivElement>): void => {
-    if (event.button !== 0 || isDocked) {
+    if (event.button !== 0) {
       return
     }
 
     const target = event.target instanceof Element ? event.target : null
 
-    if (isIgnoredDragTarget(target)) {
+    if (isIgnoredDragTarget(target, isDocked)) {
       return
     }
 
     dragStateRef.current = {
       active: false,
+      dockState: windowState === 'normal' ? null : windowState,
       startClientX: event.clientX,
       startClientY: event.clientY,
       pointerOffsetX: event.screenX - window.screenX,
