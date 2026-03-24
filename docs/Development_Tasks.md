@@ -359,7 +359,7 @@
 
 - [x] **操作**：编写 `src/renderer/providers/zhipuProvider.ts`
   - 实现 `IProvider` 接口
-  - `id`: `'zhipu'`，`name`: `'智谱 CodeGeeX'`
+  - `id`: `'zhipu'`，`name`: `'智谱'`
   - `getAuthFields()` 返回：
     ```typescript
     ;[
@@ -678,6 +678,17 @@
   3. `10%` 到 `100%` 区间内行为稳定
   4. 不出现异常闪烁、点击区域错位或完全不可见的问题
   5. `npm run typecheck` 与 `npm test` 通过
+### 5.13 线上问题修复（Issue #28）
+
+- [x] **操作**：
+  1. 收敛 `src/renderer/providers/zhipuProvider.ts` 中的用户可见厂商名称，将旧品牌展示统一改为“智谱”，保留内部 `providerId` 为 `zhipu`
+  2. 同步更新预览说明、README、PRD 与变更日志中的相关用户可见文案，确保对外展示一致
+  3. 补充 `src/renderer/providers/zhipuProvider.test.ts` 回归测试，锁定智谱 Provider 的展示名称，避免后续重新引入旧品牌文案
+- [x] **验收标准**：
+  1. 界面与用户文档中的智谱品牌展示已统一为“智谱”
+  2. 内部 `providerId`、配置结构与 IPC/存储标识保持不变
+  3. `npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
