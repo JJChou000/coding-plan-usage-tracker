@@ -4,12 +4,12 @@
 
 .expanded-view__provider {
   display: grid;
-  gap: 6px;
-  padding: 6px 0 8px;
+  gap: var(--expanded-section-gap);
+  padding: var(--expanded-section-padding-top) 0 var(--expanded-section-padding-bottom);
 }
 
 .expanded-view__provider--bordered {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: var(--section-divider-height) solid var(--border-color);
 }
 
 .expanded-view__header {
@@ -18,7 +18,7 @@
   justify-content: space-between;
   gap: 10px;
   width: 100%;
-  min-height: var(--row-height);
+  min-height: var(--expanded-header-height);
   padding: 0 8px;
   border: none;
   border-radius: 10px;
@@ -97,7 +97,7 @@
 
 .expanded-view__dimensions {
   display: grid;
-  gap: 4px;
+  gap: var(--expanded-dimension-gap);
 }
 
 .expanded-view__dimension {
@@ -105,7 +105,7 @@
   grid-template-columns: 16px minmax(0, 1fr) minmax(56px, 1.15fr) max-content max-content;
   align-items: center;
   gap: 8px;
-  min-height: 30px;
+  min-height: var(--expanded-dimension-height);
   padding: 0 8px 0 24px;
   border-radius: 10px;
   cursor: pointer;

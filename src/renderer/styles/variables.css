@@ -21,7 +21,19 @@
 
   /* 尺寸 */
   --window-width: 320px;
+  --window-padding: 16px;
   --row-height: 36px;
+  --collapsed-row-height: 36px;
+  --expanded-header-height: 36px;
+  --expanded-dimension-height: 30px;
+  --expanded-section-padding-top: 6px;
+  --expanded-section-padding-bottom: 8px;
+  --expanded-section-gap: 6px;
+  --expanded-dimension-gap: 4px;
+  --section-divider-height: 1px;
+  --dock-threshold: 20px;
+  --drag-threshold: 4px;
+  --error-placeholder-min-height: 104px;
   --padding: 8px;
   --border-radius: 12px;
   --handle-width: 24px;

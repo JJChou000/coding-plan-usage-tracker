@@ -591,6 +591,17 @@
   2. 默认注册的 `zhipu`、`bailian` Provider 仍可通过注册中心正常获取
   3. `npm run test -- providerRegistry.test.ts` 与 `npm run typecheck` 通过
 
+### 5.6 线上问题修复（Issue #4、#6、#8）
+
+- [x] **操作**：
+  1. 将 `FloatingWindow.tsx` 中的拖拽状态管理提取到 `src/renderer/hooks/useWindowDrag.ts`，并在拖拽过程中使用 `requestAnimationFrame` 节流窗口位置更新
+  2. 将浮窗尺寸相关的硬编码常量集中到 `src/renderer/styles/variables.css` 与独立尺寸计算模块，避免继续散落在组件内部
+  3. 将 `FloatingWindow.tsx` 拆分为更小的子组件，并把内容渲染、尺寸计算、拖拽行为职责分离
+- [x] **验收标准**：
+  1. `FloatingWindow.tsx` 不再直接承载完整拖拽实现与所有内容渲染细节，文件复杂度明显下降
+  2. 拖拽过程中位置更新经过 `requestAnimationFrame` 节流，避免每次 `mousemove` 都触发状态更新
+  3. `npm run typecheck` 与 `npm run test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
