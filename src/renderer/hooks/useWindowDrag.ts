@@ -17,6 +17,8 @@ import {
   type FloatingWindowSize,
   type PreviewPosition
 } from '../components/floatingWindowLayout'
+import type { AppConfig } from '../../shared/types'
+import { getNextLastNormalPosition } from './windowDragState'
 
 type DragState = {
   active: boolean
@@ -46,6 +48,7 @@ type UseWindowDragOptions = {
   currentSize: FloatingWindowSize
   isDocked: boolean
   previewMode: boolean
+  windowState: AppConfig['windowState']
   windowPosition: PreviewPosition
   dispatch: Dispatch<AppAction>
 }
@@ -106,6 +109,7 @@ export function useWindowDrag({
   currentSize,
   isDocked,
   previewMode,
+  windowState,
   windowPosition,
   dispatch
 }: UseWindowDragOptions): UseWindowDragResult {
@@ -131,8 +135,12 @@ export function useWindowDrag({
       setPreviewPosition(windowPosition)
     }
 
-    lastNormalPositionRef.current = windowPosition
-  }, [previewMode, windowPosition])
+    lastNormalPositionRef.current = getNextLastNormalPosition(
+      lastNormalPositionRef.current,
+      windowState,
+      windowPosition
+    )
+  }, [previewMode, windowPosition, windowState])
 
   useEffect(() => {
     if (previewMode) {

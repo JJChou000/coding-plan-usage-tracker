@@ -49,6 +49,7 @@ function FloatingWindow(): React.JSX.Element {
     currentSize,
     isDocked,
     previewMode,
+    windowState: state.config.windowState,
     windowPosition: state.config.windowPosition,
     dispatch
   })
