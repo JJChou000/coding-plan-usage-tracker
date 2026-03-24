@@ -581,6 +581,16 @@
   2. 标签文本在空间不足时允许省略，但不影响百分比和重置时间可读性
   3. `npm run typecheck` 通过
 
+### 5.5 线上问题修复（Issue #7）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/providers/providerRegistry.ts`，在注册 Provider 前检查 `id` 是否已存在，禁止重复注册时静默覆盖
+  2. 新增 `src/renderer/providers/providerRegistry.test.ts`，验证默认 Provider 正常注册，且重复 ID 会抛出明确错误
+- [x] **验收标准**：
+  1. 同一个 `provider.id` 被重复注册时会抛出 `Provider <id> already registered`
+  2. 默认注册的 `zhipu`、`bailian` Provider 仍可通过注册中心正常获取
+  3. `npm run test -- providerRegistry.test.ts` 与 `npm run typecheck` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过

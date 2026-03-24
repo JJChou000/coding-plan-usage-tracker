@@ -6,6 +6,10 @@ import zhipuProvider from './zhipuProvider'
 const providerRegistry = new Map<string, IProvider>()
 
 export function registerProvider(provider: IProvider): void {
+  if (providerRegistry.has(provider.id)) {
+    throw new Error(`Provider ${provider.id} already registered`)
+  }
+
   providerRegistry.set(provider.id, provider)
 }
 
