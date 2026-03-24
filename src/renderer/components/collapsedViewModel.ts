@@ -23,12 +23,10 @@ export function formatRefreshTimeLabel(
     return undefined
   }
 
-  const formattedTime = new Intl.DateTimeFormat('zh-CN', {
+  return new Intl.DateTimeFormat('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
     ...(timeZone ? { timeZone } : {})
   }).format(new Date(lastUpdated))
-
-  return `刷新 ${formattedTime}`
 }

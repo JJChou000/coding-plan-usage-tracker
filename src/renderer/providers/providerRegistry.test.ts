@@ -28,10 +28,12 @@ describe('providerRegistry', () => {
 
   it('should expose auto-registered providers', async () => {
     const { getAllProviders, getProvider } = await loadProviderRegistry()
+    const zhipuProvider = getProvider('zhipu')
 
-    expect(getProvider('zhipu')).toBeDefined()
+    expect(zhipuProvider).toBeDefined()
     expect(getProvider('bailian')).toBeDefined()
     expect(getAllProviders().map((provider) => provider.id)).toEqual(['zhipu', 'bailian'])
+    expect(zhipuProvider?.icon).toMatch(/^(data:image|file:|https?:\/\/|\.{0,2}\/|\/)/)
   })
 
   it('should throw when registering a duplicate provider id', async () => {

@@ -184,6 +184,12 @@
   font-size: 18px;
 }
 
+.settings-panel__icon-image {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
 .settings-panel__status {
   padding: 6px 10px;
   border-radius: 999px;

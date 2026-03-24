@@ -2,7 +2,9 @@ import type { KeyboardEvent, MouseEvent } from 'react'
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 
+import { getProviderDisplayMeta } from '../providers/providerDisplay'
 import ProgressBar from './ProgressBar'
+import ProviderIcon from './ProviderIcon'
 import './ExpandedView.css'
 
 export interface ExpandedViewProps {
@@ -10,35 +12,6 @@ export interface ExpandedViewProps {
   configs: ProviderConfig[]
   onToggleExpand: () => void
   onToggleDimension: (providerId: string, dimensionId: string) => void
-}
-
-type ProviderMeta = {
-  name: string
-  icon: string
-}
-
-const PROVIDER_META: Record<string, ProviderMeta> = {
-  zhipu: {
-    name: '智谱 CodeGeeX',
-    icon: '🔸'
-  },
-  bailian: {
-    name: '阿里云百炼',
-    icon: '🔹'
-  }
-}
-
-function getProviderMeta(providerId: string): ProviderMeta {
-  return (
-    PROVIDER_META[providerId] ?? {
-      name: providerId.charAt(0).toUpperCase() + providerId.slice(1),
-      icon: '•'
-    }
-  )
-}
-
-function isImageSource(icon: string): boolean {
-  return /^(data:image|https?:\/\/|\.{0,2}\/|\/)/.test(icon)
 }
 
 function handleKeyboardToggle(event: KeyboardEvent<HTMLElement>, onToggleExpand: () => void): void {
@@ -75,7 +48,7 @@ function ExpandedView({
       {
         provider,
         config,
-        providerMeta: getProviderMeta(provider.providerId)
+        providerMeta: getProviderDisplayMeta(provider.providerId)
       }
     ]
   })
@@ -104,19 +77,14 @@ function ExpandedView({
             }
           >
             <span className="expanded-view__title">
-              <span className="expanded-view__icon" aria-hidden="true">
-                {isImageSource(providerMeta.icon) ? (
-                  <img
-                    className="expanded-view__icon-image"
-                    src={providerMeta.icon}
-                    alt=""
-                    width="16"
-                    height="16"
-                  />
-                ) : (
-                  providerMeta.icon
-                )}
-              </span>
+              <ProviderIcon
+                icon={providerMeta.icon}
+                fallbackIcon={providerMeta.fallbackIcon}
+                alt={providerMeta.name}
+                className="expanded-view__icon"
+                imageClassName="expanded-view__icon-image"
+                size={16}
+              />
               <span className="expanded-view__name">{providerMeta.name}</span>
             </span>
             <span className="expanded-view__header-meta">

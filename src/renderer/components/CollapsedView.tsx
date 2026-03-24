@@ -1,5 +1,7 @@
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 
+import { getProviderDisplayMeta } from '../providers/providerDisplay'
+import ProviderIcon from './ProviderIcon'
 import { formatRefreshTimeLabel, getPrimaryDimension } from './collapsedViewModel'
 import './CollapsedView.css'
 
@@ -7,35 +9,6 @@ export interface CollapsedViewProps {
   providers: ProviderUsageData[]
   configs: ProviderConfig[]
   onToggleExpand: () => void
-}
-
-type ProviderMeta = {
-  name: string
-  icon: string
-}
-
-const PROVIDER_META: Record<string, ProviderMeta> = {
-  zhipu: {
-    name: '智谱',
-    icon: '🔸'
-  },
-  bailian: {
-    name: '百炼',
-    icon: '🔹'
-  }
-}
-
-function getProviderMeta(providerId: string): ProviderMeta {
-  return (
-    PROVIDER_META[providerId] ?? {
-      name: providerId.charAt(0).toUpperCase() + providerId.slice(1),
-      icon: '•'
-    }
-  )
-}
-
-function isImageSource(icon: string): boolean {
-  return /^(data:image|https?:\/\/|\.{0,2}\/|\/)/.test(icon)
 }
 
 function CollapsedView({
@@ -63,7 +36,7 @@ function CollapsedView({
     return [
       {
         providerId: provider.providerId,
-        providerMeta: getProviderMeta(provider.providerId),
+        providerMeta: getProviderDisplayMeta(provider.providerId),
         primaryDimension,
         error: provider.error,
         refreshTimeLabel: formatRefreshTimeLabel(provider.lastUpdated)
@@ -90,19 +63,14 @@ function CollapsedView({
           }
         >
           <span className="collapsed-view__identity">
-            <span className="collapsed-view__icon" aria-hidden="true">
-              {isImageSource(providerMeta.icon) ? (
-                <img
-                  className="collapsed-view__icon-image"
-                  src={providerMeta.icon}
-                  alt=""
-                  width="16"
-                  height="16"
-                />
-              ) : (
-                providerMeta.icon
-              )}
-            </span>
+            <ProviderIcon
+              icon={providerMeta.icon}
+              fallbackIcon={providerMeta.fallbackIcon}
+              alt={providerMeta.name}
+              className="collapsed-view__icon"
+              imageClassName="collapsed-view__icon-image"
+              size={16}
+            />
             <span className="collapsed-view__name">{providerMeta.name}</span>
           </span>
 

@@ -9,6 +9,8 @@ import {
   normalizeWindowOpacity
 } from '../../shared/windowOpacity'
 import { useAppContext } from '../context/AppContext'
+import ProviderIcon from './ProviderIcon'
+import { getProviderDisplayMeta } from '../providers/providerDisplay'
 import { getAllProviders, getProvider } from '../providers/providerRegistry'
 import './SettingsPanel.css'
 
@@ -310,6 +312,7 @@ function SettingsPanel(): React.JSX.Element {
             <div className="settings-panel__providers">
               {state.config.providers.map((config) => {
                 const provider = getProvider(config.providerId)
+                const providerMeta = getProviderDisplayMeta(config.providerId)
                 const status = getStatusMeta(
                   config.providerId,
                   config,
@@ -321,12 +324,17 @@ function SettingsPanel(): React.JSX.Element {
                   <article key={config.providerId} className="settings-panel__card">
                     <div className="settings-panel__card-head">
                       <div className="settings-panel__provider">
-                        <span className="settings-panel__icon" aria-hidden="true">
-                          {provider?.icon ?? '?'}
-                        </span>
+                        <ProviderIcon
+                          icon={providerMeta.icon}
+                          fallbackIcon={providerMeta.fallbackIcon}
+                          alt={providerMeta.name}
+                          className="settings-panel__icon"
+                          imageClassName="settings-panel__icon-image"
+                          size={20}
+                        />
                         <div className="settings-panel__provider-copy">
                           <strong className="settings-panel__provider-name">
-                            {provider?.name ?? config.providerId}
+                            {provider?.name ?? providerMeta.name}
                           </strong>
                           <span className="settings-panel__provider-id">{config.providerId}</span>
                         </div>

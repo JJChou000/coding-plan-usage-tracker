@@ -14,7 +14,7 @@ export type FloatingWindowSize = {
 }
 
 export const FLOATING_WINDOW_LAYOUT = {
-  collapsedWindowWidth: 248,
+  collapsedWindowWidth: 224,
   expandedWindowWidth: 320,
   collapsedRowHeight: 36,
   expandedHeaderHeight: 36,
