@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import type { AppConfig, AppState, ProviderUsageData } from '../../shared/types'
+import { DEFAULT_WINDOW_OPACITY } from '../../shared/windowOpacity'
 import { appReducer, normalizeCheckedDimensions } from './AppContext'
 
 function createProviderUsageData(): ProviderUsageData {
@@ -45,7 +46,8 @@ function createConfig(checkedDimensions: string[]): AppConfig {
     refreshInterval: 60,
     windowPosition: { x: 100, y: 100 },
     windowState: 'normal',
-    isExpanded: false
+    isExpanded: false,
+    windowOpacity: DEFAULT_WINDOW_OPACITY
   }
 }
 
