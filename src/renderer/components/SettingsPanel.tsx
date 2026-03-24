@@ -406,7 +406,7 @@ function SettingsPanel(): React.JSX.Element {
                 onChange={(event) => void handleWindowOpacityChange(Number(event.target.value))}
               />
               <span className="settings-panel__range-hint">
-                50% 更通透，100% 保持当前默认毛玻璃效果。
+                支持 10% - 100%，低透明度下仍会保留基础轮廓和交互可见性。
               </span>
             </label>
 
