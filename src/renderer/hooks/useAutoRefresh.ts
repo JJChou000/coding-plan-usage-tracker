@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react'
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
-import { useAppContext } from '../context/AppContext'
+import { normalizeCheckedDimensions, useAppContext } from '../context/AppContext'
 import { getProvider } from '../providers/providerRegistry'
 
 const RETRY_DELAYS_MS = [30_000, 60_000, 300_000] as const
@@ -16,11 +16,10 @@ function getRetryDelayMs(failureCount: number, intervalSeconds: number): number 
 }
 
 function getCheckedDimensions(config: ProviderConfig, data: ProviderUsageData): string[] {
-  if (config.checkedDimensions.length > 0) {
-    return config.checkedDimensions
-  }
-
-  return data.dimensions[0] ? [data.dimensions[0].id] : []
+  return normalizeCheckedDimensions(
+    config.checkedDimensions,
+    data.dimensions.map((dimension) => dimension.id)
+  )
 }
 
 function applyCheckedDimensions(
