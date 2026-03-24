@@ -306,6 +306,17 @@ function formatUsageFetchError(providerId: string, error: unknown): string {
 }
 
 function createZhipuSuccessFixtureResponse(): UsageFetchResponse {
+  const now = new Date()
+  const nextMonthResetTime = new Date(
+    now.getFullYear(),
+    now.getMonth() + 1,
+    1,
+    0,
+    0,
+    0,
+    0
+  ).getTime()
+
   return {
     providerId: 'zhipu',
     quotaLimit: {
@@ -321,7 +332,7 @@ function createZhipuSuccessFixtureResponse(): UsageFetchResponse {
             type: 'TIME_LIMIT',
             usage: 2000,
             currentValue: 240,
-            nextResetTime: Date.now() + 6 * 24 * 60 * 60 * 1000
+            nextResetTime: nextMonthResetTime
           }
         ]
       }

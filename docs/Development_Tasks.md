@@ -748,3 +748,17 @@
   2. 新增厂商弹窗不再出现 `bailian` 可选项
   3. 已有 `bailian` 配置仍可继续在设置面板中显示和编辑
   4. `npm run typecheck` 通过
+### 5.13 线上问题修复（Issue #32）
+
+- [x] **操作**：
+  1. 恢复 `src/renderer/components/ExpandedView.tsx` 在展开态中对各额度维度重置时间的完整渲染，并为时间列保留独立空间
+  2. 调整 `src/renderer/components/ExpandedView.css` 与 `src/renderer/components/floatingWindowLayout.ts` 的展开态宽度和列宽分配，保证两位数百分比下时间不再被裁切
+  3. 修正 `src/renderer/providers/zhipuProvider.ts` 对 `TIME_LIMIT` 的重置时间映射，MCP 月额度优先使用自身的重置时间并按完整月度时间格式展示；缺失时回退为下月月初
+  4. 调整 `src/main/main.ts` 的智谱 fixture，确保开发态示例数据与“按月重置”语义一致
+  5. 补充 `src/renderer/providers/zhipuProvider.test.ts` 与 `src/renderer/components/ExpandedView.test.tsx` 回归测试
+- [x] **验收标准**：
+  1. 展开态重新显示每个额度维度的重置时间
+  2. 两位数百分比场景下，时间仍完整显示，不被裁切
+  3. MCP 月额度的重置时间不再表现为 5 小时维度的时间语义
+  4. `每 5 小时` 显示 `HH:mm`，`MCP 每月` 显示完整月度重置时间
+  5. `npm run typecheck` 与 `npm test` 通过
