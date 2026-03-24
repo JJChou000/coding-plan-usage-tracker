@@ -18,10 +18,12 @@ const MIN_WINDOW_HEIGHT = HANDLE_WIDTH
 const ANIMATION_STEPS = 8
 const ANIMATION_INTERVAL_MS = 12
 
-let floatingWindow: BrowserWindow | null = null
-let settingsWindow: BrowserWindow | null = null
 let dragListenerRegistered = false
 let dockingListenerRegistered = false
+
+type ManagedWindowKind = 'floating' | 'settings'
+
+const windowInstances = new WeakMap<BrowserWindow, ManagedWindowKind>()
 
 function isWindowState(value: unknown): value is AppConfig['windowState'] {
   return (
@@ -66,6 +68,24 @@ function getClampedPosition(
 
 function getPreloadPath(): string {
   return join(__dirname, '../preload/index.js')
+}
+
+function registerWindowInstance(win: BrowserWindow, kind: ManagedWindowKind): void {
+  windowInstances.set(win, kind)
+}
+
+function resolveWindowInstance(kind: ManagedWindowKind): BrowserWindow | null {
+  for (const win of BrowserWindow.getAllWindows()) {
+    if (win.isDestroyed()) {
+      continue
+    }
+
+    if (windowInstances.get(win) === kind) {
+      return win
+    }
+  }
+
+  return null
 }
 
 function attachExternalLinkHandler(win: BrowserWindow): void {
@@ -247,7 +267,7 @@ export function createFloatingWindow(): BrowserWindow {
     }
   })
 
-  floatingWindow = win
+  registerWindowInstance(win, 'floating')
   attachExternalLinkHandler(win)
 
   if (
@@ -264,9 +284,7 @@ export function createFloatingWindow(): BrowserWindow {
   })
 
   win.on('closed', () => {
-    if (floatingWindow === win) {
-      floatingWindow = null
-    }
+    windowInstances.delete(win)
   })
 
   void loadRendererWindow(win)
@@ -275,17 +293,19 @@ export function createFloatingWindow(): BrowserWindow {
 }
 
 export function createSettingsWindow(): BrowserWindow {
-  if (settingsWindow && !settingsWindow.isDestroyed()) {
-    if (settingsWindow.isMinimized()) {
-      settingsWindow.restore()
+  const existingSettingsWindow = resolveWindowInstance('settings')
+
+  if (existingSettingsWindow) {
+    if (existingSettingsWindow.isMinimized()) {
+      existingSettingsWindow.restore()
     }
 
-    if (!settingsWindow.isVisible()) {
-      settingsWindow.show()
+    if (!existingSettingsWindow.isVisible()) {
+      existingSettingsWindow.show()
     }
 
-    settingsWindow.focus()
-    return settingsWindow
+    existingSettingsWindow.focus()
+    return existingSettingsWindow
   }
 
   const win = new BrowserWindow({
@@ -306,7 +326,7 @@ export function createSettingsWindow(): BrowserWindow {
     }
   })
 
-  settingsWindow = win
+  registerWindowInstance(win, 'settings')
   attachExternalLinkHandler(win)
 
   win.on('ready-to-show', () => {
@@ -318,9 +338,7 @@ export function createSettingsWindow(): BrowserWindow {
   })
 
   win.on('closed', () => {
-    if (settingsWindow === win) {
-      settingsWindow = null
-    }
+    windowInstances.delete(win)
   })
 
   void loadRendererWindow(win, 'settings')
@@ -329,14 +347,16 @@ export function createSettingsWindow(): BrowserWindow {
 }
 
 export function setupWindowDrag(win: BrowserWindow): void {
-  floatingWindow = win
+  registerWindowInstance(win, 'floating')
 
   if (dragListenerRegistered) {
     return
   }
 
   ipcMain.on('window:set-position', (_event, position) => {
-    if (!floatingWindow || floatingWindow.isDestroyed() || !hasPointShape(position)) {
+    const floatingWindow = resolveWindowInstance('floating')
+
+    if (!floatingWindow || !hasPointShape(position)) {
       return
     }
 
@@ -353,14 +373,16 @@ export function setupWindowDrag(win: BrowserWindow): void {
 }
 
 export function setupEdgeDocking(win: BrowserWindow): void {
-  floatingWindow = win
+  registerWindowInstance(win, 'floating')
 
   if (dockingListenerRegistered) {
     return
   }
 
   ipcMain.on('window:set-state', (_event, nextState) => {
-    if (!floatingWindow || floatingWindow.isDestroyed() || !isWindowState(nextState)) {
+    const floatingWindow = resolveWindowInstance('floating')
+
+    if (!floatingWindow || !isWindowState(nextState)) {
       return
     }
 
