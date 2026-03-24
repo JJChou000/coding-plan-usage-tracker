@@ -1,4 +1,5 @@
 import type { AuthField, IProvider, ProviderUsageData } from '../../shared/types'
+import bailianIcon from '../../../resources/icons/bailian.png'
 
 const BAILIAN_AUTH_FIELDS: AuthField[] = [
   {
@@ -13,7 +14,7 @@ const BAILIAN_AUTH_FIELDS: AuthField[] = [
 const bailianProvider: IProvider = {
   id: 'bailian',
   name: '阿里云百炼',
-  icon: '🔹',
+  icon: bailianIcon,
   getAuthFields(): AuthField[] {
     return BAILIAN_AUTH_FIELDS
   },
@@ -27,13 +28,13 @@ const bailianProvider: IProvider = {
       }
     }
 
-    // TODO: 替换为真实 API 调用，待确认 API 端点和认证方式
+    // TODO: 替换为真实 API 调用，待确认 API 端点和认证方式。
     return {
       providerId: 'bailian',
       dimensions: [
         {
           id: 'usage_5h',
-          label: '近5小时用量',
+          label: '近 5 小时用量',
           usedPercent: 6,
           used: 540,
           total: 9000,
