@@ -10,6 +10,7 @@ import {
 } from 'react'
 
 import type { AppConfig, AppState, ProviderUsageData } from '../../shared/types'
+import { DEFAULT_WINDOW_OPACITY, normalizeWindowOpacity } from '../../shared/windowOpacity'
 
 export type AppAction =
   | { type: 'SET_CONFIG'; payload: Partial<AppConfig> }
@@ -27,6 +28,7 @@ export type AppContextValue = {
 const DEFAULT_CONFIG: AppConfig = {
   providers: [],
   refreshInterval: 60,
+  windowOpacity: DEFAULT_WINDOW_OPACITY,
   windowPosition: { x: 100, y: 100 },
   windowState: 'normal',
   isExpanded: false
@@ -99,6 +101,10 @@ function mergeConfig(currentConfig: AppConfig, patch: Partial<AppConfig>): AppCo
   return normalizeProvidersConfig({
     ...currentConfig,
     ...patch,
+    windowOpacity:
+      patch.windowOpacity === undefined
+        ? currentConfig.windowOpacity
+        : normalizeWindowOpacity(patch.windowOpacity),
     windowPosition: patch.windowPosition ?? currentConfig.windowPosition,
     providers: patch.providers ?? currentConfig.providers
   })
