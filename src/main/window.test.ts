@@ -6,7 +6,8 @@ vi.mock('./configStore', () => ({
     refreshInterval: 60,
     windowPosition: { x: 1700, y: 120 },
     windowState: 'normal',
-    isExpanded: false
+    isExpanded: false,
+    windowOpacity: 1
   })),
   setConfig: vi.fn()
 }))
@@ -87,7 +88,8 @@ describe('resizeWindow', () => {
       refreshInterval: 60,
       windowPosition: { x: 1700, y: 120 },
       windowState: 'normal',
-      isExpanded: false
+      isExpanded: false,
+      windowOpacity: 1
     })
 
     const { win, setPosition, setSize } = createMockWindow({
