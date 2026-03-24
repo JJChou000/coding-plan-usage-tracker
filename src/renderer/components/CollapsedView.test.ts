@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
-import { formatRefreshTimeLabel, getPrimaryDimension } from './collapsedViewModel'
+import {
+  formatRefreshTimeLabel,
+  getDockedHandleDisplay,
+  getPrimaryDimension
+} from './collapsedViewModel'
 import { getFloatingSize } from './floatingWindowLayout'
 
 function createProviderConfig(): ProviderConfig {
@@ -51,6 +55,59 @@ describe('CollapsedView helpers', () => {
 
   it('formats refresh time from provider lastUpdated instead of quota resetTime', () => {
     expect(formatRefreshTimeLabel(createProviderUsageData().lastUpdated, 'UTC')).toBe('09:07')
+  })
+
+  it('uses the first visible provider primary dimension for the docked handle', () => {
+    const zhipuConfig = createProviderConfig()
+    const bailianConfig: ProviderConfig = {
+      providerId: 'bailian',
+      auth: {
+        cookie: 'cookie'
+      },
+      checkedDimensions: ['usage_5h'],
+      enabled: true
+    }
+    const bailianUsage: ProviderUsageData = {
+      providerId: 'bailian',
+      dimensions: [
+        {
+          id: 'usage_5h',
+          label: '近5小时用量',
+          usedPercent: 48,
+          used: 4320,
+          total: 9000,
+          isChecked: true
+        }
+      ],
+      lastUpdated: Date.UTC(2026, 2, 24, 9, 8, 0)
+    }
+
+    expect(
+      getDockedHandleDisplay(
+        [zhipuConfig, bailianConfig],
+        [createProviderUsageData(), bailianUsage]
+      )
+    ).toEqual({
+      providerId: 'zhipu',
+      text: '31%',
+      state: 'usage'
+    })
+  })
+
+  it('falls back to a placeholder when no visible provider has usable quota data', () => {
+    const zhipuConfig = createProviderConfig()
+    const emptyUsage: ProviderUsageData = {
+      providerId: 'zhipu',
+      dimensions: [],
+      lastUpdated: Date.UTC(2026, 2, 24, 9, 9, 0),
+      error: '请求失败'
+    }
+
+    expect(getDockedHandleDisplay([zhipuConfig], [emptyUsage])).toEqual({
+      providerId: 'zhipu',
+      text: '--',
+      state: 'placeholder'
+    })
   })
 })
 
