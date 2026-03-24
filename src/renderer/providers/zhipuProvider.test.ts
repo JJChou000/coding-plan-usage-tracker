@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { parseZhipuUsageResponse } from './zhipuProvider'
+import zhipuProvider, { parseZhipuUsageResponse } from './zhipuProvider'
+
+describe('zhipuProvider', () => {
+  it('uses 智谱 as the user-facing provider name', () => {
+    expect(zhipuProvider.name).toBe('智谱')
+  })
+})
 
 describe('parseZhipuUsageResponse', () => {
   it('should parse valid response with TOKENS_LIMIT and TIME_LIMIT', () => {

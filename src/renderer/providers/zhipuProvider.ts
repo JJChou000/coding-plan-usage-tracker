@@ -227,7 +227,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
 
 const zhipuProvider: IProvider = {
   id: ZHIPU_PROVIDER_ID,
-  name: '智谱 CodeGeeX',
+  name: '智谱',
   icon: zhipuIcon,
   getAuthFields(): AuthField[] {
     return ZHIPU_AUTH_FIELDS
