@@ -1,6 +1,13 @@
 import { useState } from 'react'
 
 import type { AppConfig, AuthField, ProviderConfig, ProviderUsageData } from '../../shared/types'
+import {
+  DEFAULT_WINDOW_OPACITY,
+  MAX_WINDOW_OPACITY,
+  MIN_WINDOW_OPACITY,
+  WINDOW_OPACITY_STEP,
+  normalizeWindowOpacity
+} from '../../shared/windowOpacity'
 import { useAppContext } from '../context/AppContext'
 import { getAllProviders, getProvider } from '../providers/providerRegistry'
 import './SettingsPanel.css'
@@ -101,6 +108,9 @@ function SettingsPanel(): React.JSX.Element {
   const activeFields = dialog ? getProviderFields(dialog.providerId) : []
   const canSaveDialog = dialog ? hasRequiredValues(dialog.providerId, dialog.auth) : false
   const deleteProvider = deleteDialog ? getProvider(deleteDialog.providerId) : undefined
+  const opacityPercent = Math.round(
+    normalizeWindowOpacity(state.config.windowOpacity ?? DEFAULT_WINDOW_OPACITY) * 100
+  )
 
   const openAddDialog = (): void => {
     if (availableProviders.length === 0) {
@@ -242,6 +252,19 @@ function SettingsPanel(): React.JSX.Element {
     }
   }
 
+  const handleWindowOpacityChange = async (windowOpacity: number): Promise<void> => {
+    const nextConfig: AppConfig = {
+      ...state.config,
+      windowOpacity: normalizeWindowOpacity(windowOpacity)
+    }
+
+    const saved = await persistConfig(nextConfig, dispatch)
+
+    if (!saved) {
+      setSaveError('浮窗透明度保存失败，请稍后再试。')
+    }
+  }
+
   return (
     <section className="settings-panel">
       <div className="settings-panel__content">
@@ -251,7 +274,7 @@ function SettingsPanel(): React.JSX.Element {
             <div>
               <h1 className="settings-panel__title">设置</h1>
               <p className="settings-panel__description">
-                管理厂商认证信息与刷新频率，保存后会立刻同步到当前打开的窗口。
+                管理厂商认证信息、浮窗透明度与刷新频率，保存后会立即同步到当前打开的窗口。
               </p>
             </div>
             <button
@@ -299,7 +322,7 @@ function SettingsPanel(): React.JSX.Element {
                     <div className="settings-panel__card-head">
                       <div className="settings-panel__provider">
                         <span className="settings-panel__icon" aria-hidden="true">
-                          {provider?.icon ?? '·'}
+                          {provider?.icon ?? '?'}
                         </span>
                         <div className="settings-panel__provider-copy">
                           <strong className="settings-panel__provider-name">
@@ -353,24 +376,47 @@ function SettingsPanel(): React.JSX.Element {
 
         <footer className="settings-panel__footer">
           <div>
-            <h2 className="settings-panel__section-title">刷新频率</h2>
-            <p className="settings-panel__section-copy">支持 30 秒到 5 分钟之间的常用档位。</p>
+            <h2 className="settings-panel__section-title">显示与刷新</h2>
+            <p className="settings-panel__section-copy">
+              调整浮窗透明度后会立即作用到当前浮窗，刷新频率仍可单独配置。
+            </p>
           </div>
 
-          <label className="settings-panel__select-wrap">
-            <span className="settings-panel__select-label">自动刷新</span>
-            <select
-              className="settings-panel__select"
-              value={state.config.refreshInterval}
-              onChange={(event) => void handleRefreshChange(Number(event.target.value))}
-            >
-              {REFRESH_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}s
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="settings-panel__control-grid">
+            <label className="settings-panel__range-wrap">
+              <span className="settings-panel__range-head">
+                <span className="settings-panel__select-label">浮窗透明度</span>
+                <strong className="settings-panel__range-value">{opacityPercent}%</strong>
+              </span>
+              <input
+                className="settings-panel__range"
+                type="range"
+                min={MIN_WINDOW_OPACITY}
+                max={MAX_WINDOW_OPACITY}
+                step={WINDOW_OPACITY_STEP}
+                value={normalizeWindowOpacity(state.config.windowOpacity)}
+                onChange={(event) => void handleWindowOpacityChange(Number(event.target.value))}
+              />
+              <span className="settings-panel__range-hint">
+                50% 更通透，100% 保持当前默认毛玻璃效果。
+              </span>
+            </label>
+
+            <label className="settings-panel__select-wrap">
+              <span className="settings-panel__select-label">自动刷新</span>
+              <select
+                className="settings-panel__select"
+                value={state.config.refreshInterval}
+                onChange={(event) => void handleRefreshChange(Number(event.target.value))}
+              >
+                {REFRESH_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}s
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
         </footer>
       </div>
 

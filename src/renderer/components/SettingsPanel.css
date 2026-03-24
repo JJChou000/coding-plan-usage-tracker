@@ -285,6 +285,37 @@
   gap: 6px;
 }
 
+.settings-panel__control-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(180px, 0.8fr);
+  gap: 16px;
+  width: min(100%, 520px);
+}
+
+.settings-panel__range-wrap {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-panel__range-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-panel__range-value {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settings-panel__range-hint {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .settings-panel__select,
 .settings-panel__input {
   min-height: 42px;
@@ -294,6 +325,51 @@
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-primary);
   font: inherit;
+}
+
+.settings-panel__range {
+  width: 100%;
+  height: 6px;
+  margin: 0;
+  appearance: none;
+  border-radius: 999px;
+  outline: none;
+  background: transparent;
+}
+
+.settings-panel__range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.24), rgba(74, 222, 128, 0.82));
+}
+
+.settings-panel__range::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: #f3f7fb;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
+}
+
+.settings-panel__range::-moz-range-track {
+  height: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.24), rgba(74, 222, 128, 0.82));
+}
+
+.settings-panel__range::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+  background: #f3f7fb;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.22);
+  cursor: pointer;
 }
 
 .settings-panel__overlay {
@@ -355,5 +431,10 @@
 
   .settings-panel__status {
     align-self: flex-start;
+  }
+
+  .settings-panel__control-grid {
+    grid-template-columns: 1fr;
+    width: 100%;
   }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import type { AppState } from '../shared/types'
+import { DEFAULT_WINDOW_OPACITY } from '../shared/windowOpacity'
 import FloatingWindow from './components/FloatingWindow'
 import SettingsPanel from './components/SettingsPanel'
 import { AppContextProvider, useAppContext } from './context/AppContext'
@@ -19,6 +20,7 @@ const PREVIEW_STATE: AppState = {
       }
     ],
     refreshInterval: 60,
+    windowOpacity: DEFAULT_WINDOW_OPACITY,
     windowPosition: { x: 24, y: 24 },
     windowState: 'normal',
     isExpanded: false

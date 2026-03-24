@@ -2,6 +2,7 @@ import { useRef, type CSSProperties } from 'react'
 
 import { useAppContext } from '../context/AppContext'
 import { useWindowDrag } from '../hooks/useWindowDrag'
+import { buildFloatingWindowSurfaceVars } from './floatingWindowOpacity'
 import EdgeHandle from './EdgeHandle'
 import FloatingWindowContent from './FloatingWindowContent'
 import { getDockSide, getFloatingSize } from './floatingWindowLayout'
@@ -57,7 +58,8 @@ function FloatingWindow(): React.JSX.Element {
   const floatingStyle: CSSProperties = {
     width: `${currentSize.width}px`,
     height: `${currentSize.height}px`,
-    ['--edge-handle-length' as string]: `${currentSize.handleLength}px`
+    ['--edge-handle-length' as string]: `${currentSize.handleLength}px`,
+    ...buildFloatingWindowSurfaceVars(state.config.windowOpacity)
   }
 
   if (previewMode) {

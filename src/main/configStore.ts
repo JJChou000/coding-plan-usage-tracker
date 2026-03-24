@@ -5,10 +5,12 @@ import ElectronStoreModule, { type Schema } from 'electron-store'
 import { app } from 'electron'
 
 import type { AppConfig, ProviderConfig } from '../shared/types'
+import { DEFAULT_WINDOW_OPACITY, normalizeWindowOpacity } from '../shared/windowOpacity'
 
 const defaultConfig: AppConfig = {
   providers: [],
   refreshInterval: 60,
+  windowOpacity: DEFAULT_WINDOW_OPACITY,
   windowPosition: { x: 100, y: 100 },
   windowState: 'normal',
   isExpanded: false
@@ -47,6 +49,11 @@ const appConfigSchema: Schema<AppConfig> = {
     type: 'number',
     minimum: 30,
     maximum: 300
+  },
+  windowOpacity: {
+    type: 'number',
+    minimum: 0.5,
+    maximum: 1
   },
   windowPosition: {
     type: 'object',
@@ -87,7 +94,10 @@ const configStore = new ElectronStore<AppConfig>({
 })
 
 export function getConfig(): AppConfig {
-  return configStore.store
+  return {
+    ...configStore.store,
+    windowOpacity: normalizeWindowOpacity(configStore.store.windowOpacity)
+  }
 }
 
 export function setConfig(config: Partial<AppConfig>): void {
@@ -97,7 +107,11 @@ export function setConfig(config: Partial<AppConfig>): void {
 
   const nextConfig: AppConfig = {
     ...configStore.store,
-    ...config
+    ...config,
+    windowOpacity:
+      config.windowOpacity === undefined
+        ? normalizeWindowOpacity(configStore.store.windowOpacity)
+        : normalizeWindowOpacity(config.windowOpacity)
   }
 
   configStore.store = nextConfig
