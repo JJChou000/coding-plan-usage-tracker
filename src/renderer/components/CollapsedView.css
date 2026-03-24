@@ -8,7 +8,7 @@
   align-items: center;
   gap: 10px;
   width: 100%;
-  min-height: var(--row-height);
+  min-height: var(--collapsed-row-height);
   padding: 0 8px;
   border: none;
   border-radius: 10px;
