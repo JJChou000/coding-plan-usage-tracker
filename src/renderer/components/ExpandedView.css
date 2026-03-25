@@ -102,7 +102,7 @@
 
 .expanded-view__dimension {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) minmax(56px, 1.15fr) max-content max-content;
+  grid-template-columns: 16px minmax(0, 1fr) minmax(68px, 1fr) minmax(40px, max-content) minmax(108px, max-content);
   align-items: center;
   gap: 8px;
   min-height: var(--expanded-dimension-height);
@@ -197,18 +197,18 @@
 }
 
 .expanded-view__bar {
-  min-width: 0;
+  min-width: 68px;
 }
 
 .expanded-view__percent {
-  min-width: 38px;
+  min-width: 40px;
   font-size: 12px;
   font-weight: 600;
   text-align: right;
 }
 
 .expanded-view__reset {
-  flex-shrink: 0;
+  min-width: 108px;
   color: var(--text-secondary);
   font-size: 11px;
   text-align: right;

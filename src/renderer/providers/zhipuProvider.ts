@@ -68,16 +68,22 @@ function clampPercent(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value * 100) / 100))
 }
 
-function formatResetTime(nextResetTime: unknown): string | undefined {
+function resolveResetDate(nextResetTime: unknown): Date | null {
   const timestamp = toFiniteNumber(nextResetTime)
 
   if (timestamp === null || timestamp <= 0) {
-    return undefined
+    return null
   }
 
   const resetDate = new Date(timestamp)
 
-  if (Number.isNaN(resetDate.getTime())) {
+  return Number.isNaN(resetDate.getTime()) ? null : resetDate
+}
+
+function formatTokenResetTime(nextResetTime: unknown): string | undefined {
+  const resetDate = resolveResetDate(nextResetTime)
+
+  if (!resetDate) {
     return undefined
   }
 
@@ -86,6 +92,31 @@ function formatResetTime(nextResetTime: unknown): string | undefined {
     minute: '2-digit',
     hour12: false
   })
+}
+
+function getStartOfNextMonth(referenceTimestamp: number): Date {
+  const referenceDate = new Date(referenceTimestamp)
+
+  return new Date(referenceDate.getFullYear(), referenceDate.getMonth() + 1, 1, 0, 0, 0, 0)
+}
+
+function formatMonthlyResetTime(
+  nextResetTime: unknown,
+  referenceTimestamp = Date.now()
+): string | undefined {
+  const resetDate = resolveResetDate(nextResetTime) ?? getStartOfNextMonth(referenceTimestamp)
+
+  if (Number.isNaN(resetDate.getTime())) {
+    return undefined
+  }
+
+  const year = resetDate.getFullYear()
+  const month = String(resetDate.getMonth() + 1).padStart(2, '0')
+  const day = String(resetDate.getDate()).padStart(2, '0')
+  const hour = String(resetDate.getHours()).padStart(2, '0')
+  const minute = String(resetDate.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 function resolveLimits(rawResponse: ZhipuRawUsageResponse): ZhipuUsageLimit[] {
@@ -180,6 +211,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
     return rawResponse
   }
 
+  const referenceTimestamp = Date.now()
   const limits = resolveLimits(rawResponse)
   const tokenLimit = limits.find((limit) => limit.type === 'TOKENS_LIMIT')
   const mcpLimit = limits.find((limit) => limit.type === 'TIME_LIMIT')
@@ -190,7 +222,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
       createDimension(tokenLimit, {
         id: 'token_5h',
         label: '每 5 小时 Token',
-        resetTime: formatResetTime(tokenLimit.nextResetTime),
+        resetTime: formatTokenResetTime(tokenLimit.nextResetTime),
         isChecked: true
       })
     )
@@ -201,6 +233,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
       createDimension(mcpLimit, {
         id: 'mcp_monthly',
         label: 'MCP 每月额度',
+        resetTime: formatMonthlyResetTime(mcpLimit.nextResetTime, referenceTimestamp),
         isChecked: false
       })
     )
@@ -212,7 +245,7 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
     return {
       providerId: ZHIPU_PROVIDER_ID,
       dimensions: [],
-      lastUpdated: Date.now(),
+      lastUpdated: referenceTimestamp,
       error: error ?? '智谱用量数据格式不正确'
     }
   }
@@ -220,14 +253,14 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
   return {
     providerId: ZHIPU_PROVIDER_ID,
     dimensions,
-    lastUpdated: Date.now(),
+    lastUpdated: referenceTimestamp,
     ...(error ? { error } : {})
   }
 }
 
 const zhipuProvider: IProvider = {
   id: ZHIPU_PROVIDER_ID,
-  name: '智谱 CodeGeeX',
+  name: '智谱',
   icon: zhipuIcon,
   getAuthFields(): AuthField[] {
     return ZHIPU_AUTH_FIELDS
