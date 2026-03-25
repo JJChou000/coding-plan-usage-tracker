@@ -730,6 +730,17 @@
   3. 无主用量时仍保留箭头回退逻辑，点击吸附态区域仍可恢复浮窗
   4. `npm test -- EdgeHandle.test.tsx`、`npm run typecheck` 与 `npm test` 通过
 
+### 5.17 线上问题修复（Issue #38）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/CollapsedView.css` 的三列栅格、gap、padding 与主百分比对齐策略，进一步压缩厂商名与百分比之间的无效空白
+  2. 调整 `src/renderer/components/floatingWindowLayout.ts`，将收缩态宽度继续收紧到更贴合常驻场景的尺寸
+  3. 补充 `src/renderer/components/CollapsedView.test.ts` 回归测试，锁定紧凑布局规则，并确保其与低透明度文字强化样式可以同时存在
+- [x] **验收标准**：
+  1. 收缩态中厂商名与主百分比之间不再存在明显空白，主百分比保持贴近主信息区域显示
+  2. 刷新时间仍保持独立可读，错误状态提示点不会挤压主信息
+  3. `npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
