@@ -12,6 +12,20 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 - Latest release: [GitHub Releases](https://github.com/JJChou000/coding-plan-usage-tracker/releases)
 - Changelog: [docs/Changelog.md](./docs/Changelog.md)
 
+## Screenshots
+
+### Collapsed View
+
+![Collapsed floating window](docs/assets/readme/collapsed.png)
+
+### Expanded View
+
+![Expanded floating window](docs/assets/readme/expanded.png)
+
+### Settings Panel
+
+![Settings panel](docs/assets/readme/settings.png)
+
 ## Highlights
 
 - Always-on desktop floating window with collapsed, expanded, and edge-docked states
@@ -72,9 +86,8 @@ npm run build
 
 ## Repository Notes
 
-- The root `README.md` is now a language selector page.
-- Release-only screenshots under `output/playwright` have been removed from version control.
-- Unused scaffold leftovers under `src/renderer/src` have been removed from version control.
+- The root `README.md` acts as the repository landing page.
+- Screenshot assets are stored under `docs/assets/readme/`.
 - Local build artifacts such as `dist/`, `out/`, and `node_modules/` are kept out of GitHub.
 
 ## Additional Docs
