@@ -27,11 +27,9 @@ function EdgeHandle({ side, usageLabel, onClick }: EdgeHandleProps): React.JSX.E
   const displayLabel = usageLabel?.trim()
   const shouldShowUsage = Boolean(displayLabel)
   const contentClassName = shouldShowUsage
-    ? `edge-handle__content ${
-        side === 'left' || side === 'right'
-          ? 'edge-handle__content--vertical'
-          : 'edge-handle__content--horizontal'
-      }${displayLabel === '--' ? ' edge-handle__content--placeholder' : ''}`
+    ? `edge-handle__content edge-handle__content--horizontal${
+        displayLabel === '--' ? ' edge-handle__content--placeholder' : ''
+      }`
     : 'edge-handle__arrow'
 
   return (

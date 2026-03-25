@@ -11,12 +11,21 @@ describe('EdgeHandle', () => {
 
     expect(markup).toContain('31')
     expect(markup).not.toContain('%')
-    expect(markup).not.toContain('◀')
+    expect(markup).toContain('edge-handle__content')
+  })
+
+  it('renders left and right docked usage in a horizontal single line', () => {
+    const markup = renderToStaticMarkup(
+      <EdgeHandle side="right" usageLabel="57" onClick={() => undefined} />
+    )
+
+    expect(markup).toContain('edge-handle__content--horizontal')
+    expect(markup).not.toContain('edge-handle__content--vertical')
   })
 
   it('falls back to the directional arrow when no usage label is available', () => {
     const markup = renderToStaticMarkup(<EdgeHandle side="right" onClick={() => undefined} />)
 
-    expect(markup).toContain('▶')
+    expect(markup).toContain('edge-handle__arrow')
   })
 })

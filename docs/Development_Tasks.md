@@ -718,6 +718,18 @@
   5. 点击吸附态区域仍可恢复浮窗
   6. `npm run typecheck` 与 `npm test` 通过
 
+### 5.16 线上问题修复（Issue #40）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/EdgeHandle.tsx`，取消左右吸附时主用量文本的竖排类名分支，统一改为横向单行展示
+  2. 清理 `src/renderer/components/EdgeHandle.css` 中已失效的竖排旋转样式，避免后续再次回到旧表现
+  3. 补充 `src/renderer/components/EdgeHandle.test.tsx` 回归测试，锁定左右吸附时使用横向类名、不得继续渲染竖排类名
+- [x] **验收标准**：
+  1. 左右吸附态中的数字以横向文本显示，并保持单行
+  2. 吸附态仍然只显示纯数字或 `--` 占位，不重新引入 `%`
+  3. 无主用量时仍保留箭头回退逻辑，点击吸附态区域仍可恢复浮窗
+  4. `npm test -- EdgeHandle.test.tsx`、`npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
