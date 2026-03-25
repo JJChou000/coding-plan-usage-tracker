@@ -129,7 +129,7 @@ describe('CollapsedView helpers', () => {
 })
 
 describe('floating window collapsed layout', () => {
-  it('keeps provider identity and usage metric in the same compact summary group', () => {
+  it('places provider identity, usage metric, and refresh time as three ordered regions', () => {
     const view = CollapsedView({
       providers: [createProviderUsageData()],
       configs: [createProviderConfig()],
@@ -138,11 +138,10 @@ describe('floating window collapsed layout', () => {
 
     const rows = getElementChildren(view)
     const rowChildren = getElementChildren(rows[0])
-    const summaryChildren = getElementChildren(rowChildren[0])
 
-    expect(rowChildren[0].props.className).toContain('collapsed-view__summary')
-    expect(summaryChildren[0].props.className).toContain('collapsed-view__identity')
-    expect(summaryChildren[1].props.className).toContain('collapsed-view__metric')
+    expect(rowChildren[0].props.className).toContain('collapsed-view__identity')
+    expect(rowChildren[1].props.className).toContain('collapsed-view__metric')
+    expect(rowChildren[2].props.className).toContain('collapsed-view__refresh')
   })
 
   it('keeps the collapsed width compact enough for the denser layout', () => {

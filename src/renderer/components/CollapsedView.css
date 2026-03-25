@@ -4,7 +4,8 @@
 }
 
 .collapsed-view__row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(32px, 1fr) auto;
   align-items: center;
   gap: 4px;
   width: 100%;
@@ -20,14 +21,6 @@
   transition:
     background-color var(--transition-fast),
     transform var(--transition-fast);
-}
-
-.collapsed-view__summary {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  min-width: 0;
-  flex: 1 1 auto;
 }
 
 .collapsed-view__row:hover {
@@ -48,7 +41,7 @@
   align-items: center;
   gap: 4px;
   min-width: 0;
-  flex: 0 1 auto;
+  overflow: hidden;
 }
 
 .collapsed-view__icon {
@@ -76,13 +69,13 @@
 }
 
 .collapsed-view__metric {
-  flex-shrink: 0;
   min-width: 32px;
   color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
-  text-align: right;
+  justify-self: center;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
@@ -91,8 +84,6 @@
   align-items: center;
   justify-content: flex-end;
   gap: 2px;
-  margin-left: auto;
-  flex-shrink: 0;
   min-width: 31px;
 }
 
