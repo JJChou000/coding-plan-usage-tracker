@@ -824,3 +824,18 @@
   1. 低透明度场景下，折叠态刷新时间与展开态重置时间不再弱于百分比文字，能够保持稳定可读
   2. 百分比与时间文字共用同一套视觉增强策略，避免后续样式漂移
   3. `npm run typecheck` 与 `npm run test` 通过
+
+## 发布整理记录
+
+### v0.2.0 发布收尾
+
+- [x] **操作**：
+  1. 重写 `README.md`，改为仓库语言入口页，并新增 `README.zh-CN.md` 与 `README.en.md`
+  2. 将项目版本升级到 `0.2.0`，同步更新 `package.json`、`package-lock.json` 与 `docs/Changelog.md`
+  3. 清理已跟踪但不应继续公开跟踪的内容，移除 `output/playwright/stage5_3` 截图产物与未使用的 `src/renderer/src` 脚手架残留
+  4. 重新执行构建验证并发布 GitHub Release
+- [x] **验收标准**：
+  1. 根 README 提供中文与英文两个超链接入口
+  2. 仓库不再跟踪发布无关截图和未使用脚手架文件
+  3. `npm run typecheck`、`npm run test` 与 `npm run build` 通过
+  4. GitHub Release 包含 `v0.2.0` Windows 安装包

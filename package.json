@@ -1,10 +1,17 @@
 {
   "name": "coding-plan-usage-tracker",
-  "version": "0.1.1",
-  "description": "Desktop floating tracker for AI coding plan quota usage.",
+  "version": "0.2.0",
+  "description": "Windows desktop floating tracker for AI coding plan quota usage.",
   "main": "./out/main/index.js",
   "author": "user",
-  "homepage": "https://electron-vite.org",
+  "homepage": "https://github.com/JJChou000/coding-plan-usage-tracker",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JJChou000/coding-plan-usage-tracker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JJChou000/coding-plan-usage-tracker/issues"
+  },
   "scripts": {
     "install:cn": "set ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ && set ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ && npm install",
     "format": "prettier --write .",
