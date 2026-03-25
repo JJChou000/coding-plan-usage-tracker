@@ -62,7 +62,7 @@ export function getDockedHandleDisplay(
 
     return {
       providerId: provider.providerId,
-      text: `${Math.round(primaryDimension.usedPercent)}%`,
+      text: `${Math.round(primaryDimension.usedPercent)}`,
       state: 'usage'
     }
   }

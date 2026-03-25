@@ -89,7 +89,7 @@ describe('CollapsedView helpers', () => {
       )
     ).toEqual({
       providerId: 'zhipu',
-      text: '31%',
+      text: '31',
       state: 'usage'
     })
   })

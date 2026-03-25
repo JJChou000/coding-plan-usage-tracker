@@ -4,12 +4,13 @@ import { describe, expect, it } from 'vitest'
 import EdgeHandle from './EdgeHandle'
 
 describe('EdgeHandle', () => {
-  it('renders the primary usage percentage when provided', () => {
+  it('renders the docked primary usage as plain digits when provided', () => {
     const markup = renderToStaticMarkup(
-      <EdgeHandle side="left" usageLabel="31%" onClick={() => undefined} />
+      <EdgeHandle side="left" usageLabel="31" onClick={() => undefined} />
     )
 
-    expect(markup).toContain('31%')
+    expect(markup).toContain('31')
+    expect(markup).not.toContain('%')
     expect(markup).not.toContain('◀')
   })
 

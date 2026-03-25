@@ -704,6 +704,20 @@
   4. `每 5 小时` 显示 `HH:mm`，`MCP 每月` 显示完整月度重置时间
   5. `npm run typecheck` 与 `npm test` 通过
 
+### 5.15 线上问题修复（Issue #29）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/hooks/useWindowDrag.ts` 与 `src/renderer/hooks/windowDragState.ts`，让吸附态继续进入拖拽流程，并在左右吸附时仅允许沿边上下移动、上下吸附时仅允许沿边左右移动，拖拽过程中保持原吸附状态
+  2. 调整 `src/renderer/components/collapsedViewModel.ts`、`src/renderer/components/EdgeHandle.tsx` 与 `src/renderer/components/EdgeHandle.css`，让吸附态仅显示纯数字，保留 `--` 占位，并将左右吸附时的数字改为顺时针旋转 `90deg`
+  3. 补充 `src/renderer/hooks/windowDragState.test.ts`、`src/renderer/components/CollapsedView.test.ts` 与 `src/renderer/components/EdgeHandle.test.tsx` 回归测试，覆盖沿边拖拽约束、纯数字展示与占位兜底
+- [x] **验收标准**：
+  1. 左右吸附时可沿边上下拖动，上下吸附时可沿边左右拖动
+  2. 拖动过程中浮窗保持吸附态，不自动脱离边缘，也不覆盖恢复所需的正常态位置
+  3. 吸附态显示纯数字，不再显示 `%`，无数据时仍显示 `--`
+  4. 左右吸附时数字方向符合顺时针旋转 `90deg` 的阅读预期
+  5. 点击吸附态区域仍可恢复浮窗
+  6. `npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
