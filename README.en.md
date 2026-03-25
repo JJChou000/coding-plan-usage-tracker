@@ -22,6 +22,10 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 
 ![Expanded floating window](docs/assets/readme/expanded.png)
 
+### Docked View
+
+![Docked floating window](docs/assets/readme/docked.png)
+
 ### Settings Panel
 
 ![Settings panel](docs/assets/readme/settings.png)
@@ -48,7 +52,7 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 ### Alibaba Cloud Bailian
 
 - Auth field: `Cookie`
-- Current status: provider structure and compatibility code are preserved, but the entry is hidden from the add-provider flow
+- Current status: new setup is not publicly enabled yet
 - Data source: mock data is still used until the real API is confirmed
 
 ## Installation
