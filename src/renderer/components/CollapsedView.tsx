@@ -2,7 +2,7 @@ import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 
 import { getProviderDisplayMeta } from '../providers/providerDisplay'
 import ProviderIcon from './ProviderIcon'
-import { formatRefreshTimeLabel, getPrimaryDimension } from './collapsedViewModel'
+import { getCollapsedTimeLabel, getPrimaryDimension } from './collapsedViewModel'
 import './CollapsedView.css'
 
 export interface CollapsedViewProps {
@@ -39,7 +39,7 @@ function CollapsedView({
         providerMeta: getProviderDisplayMeta(provider.providerId),
         primaryDimension,
         error: provider.error,
-        refreshTimeLabel: formatRefreshTimeLabel(provider.lastUpdated)
+        timeLabel: getCollapsedTimeLabel(primaryDimension)
       }
     ]
   })
@@ -50,7 +50,7 @@ function CollapsedView({
 
   return (
     <div className="collapsed-view">
-      {rows.map(({ providerId, providerMeta, primaryDimension, error, refreshTimeLabel }) => (
+      {rows.map(({ providerId, providerMeta, primaryDimension, error, timeLabel }) => (
         <button
           key={providerId}
           type="button"
@@ -82,9 +82,9 @@ function CollapsedView({
             {error ? (
               <span className="collapsed-view__status-dot" aria-hidden="true" title={error} />
             ) : null}
-            {refreshTimeLabel ? (
+            {timeLabel ? (
               <span className="collapsed-view__refresh-text floating-window__data-emphasis">
-                {refreshTimeLabel}
+                {timeLabel}
               </span>
             ) : null}
           </span>

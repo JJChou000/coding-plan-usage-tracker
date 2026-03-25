@@ -21,17 +21,8 @@ export function getPrimaryDimension(
   return provider.dimensions[0]
 }
 
-export function formatRefreshTimeLabel(lastUpdated: number, timeZone?: string): string | undefined {
-  if (!Number.isFinite(lastUpdated)) {
-    return undefined
-  }
-
-  return new Intl.DateTimeFormat('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-    ...(timeZone ? { timeZone } : {})
-  }).format(new Date(lastUpdated))
+export function getCollapsedTimeLabel(dimension: QuotaDimension | undefined): string | undefined {
+  return dimension?.resetTime
 }
 
 export function getDockedHandleDisplay(

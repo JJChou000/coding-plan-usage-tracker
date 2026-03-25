@@ -7,7 +7,7 @@ import { Children, isValidElement, type ReactElement, type ReactNode } from 'rea
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 import {
-  formatRefreshTimeLabel,
+  getCollapsedTimeLabel,
   getDockedHandleDisplay,
   getPrimaryDimension
 } from './collapsedViewModel'
@@ -74,8 +74,8 @@ describe('CollapsedView helpers', () => {
     )
   })
 
-  it('formats refresh time from provider lastUpdated instead of quota resetTime', () => {
-    expect(formatRefreshTimeLabel(createProviderUsageData().lastUpdated, 'UTC')).toBe('09:07')
+  it('uses the primary dimension reset time for the collapsed time label', () => {
+    expect(getCollapsedTimeLabel(createProviderUsageData().dimensions[0])).toBe('03-27')
   })
 
   it('uses the first visible provider primary dimension for the docked handle', () => {
@@ -171,6 +171,19 @@ describe('floating window collapsed layout', () => {
 })
 
 describe('CollapsedView', () => {
+  it('renders the primary dimension reset time instead of the provider refresh time', () => {
+    const html = renderToStaticMarkup(
+      createElement(CollapsedView, {
+        providers: [createProviderUsageData()],
+        configs: [createProviderConfig()],
+        onToggleExpand: () => {}
+      })
+    )
+
+    expect(html).toContain('03-27')
+    expect(html).not.toContain('09:07')
+  })
+
   it('applies the shared emphasis treatment to the primary metric and refresh time', () => {
     const html = renderToStaticMarkup(
       createElement(CollapsedView, {
