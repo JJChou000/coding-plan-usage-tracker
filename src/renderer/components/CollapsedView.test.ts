@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { Children, isValidElement, type ReactElement, type ReactNode } from 'react'
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
 import {
@@ -6,7 +7,13 @@ import {
   getDockedHandleDisplay,
   getPrimaryDimension
 } from './collapsedViewModel'
+import CollapsedView from './CollapsedView'
 import { getFloatingSize } from './floatingWindowLayout'
+
+type TestElement = ReactElement<{
+  children?: ReactNode
+  className?: string
+}>
 
 function createProviderConfig(): ProviderConfig {
   return {
@@ -44,6 +51,16 @@ function createProviderUsageData(): ProviderUsageData {
     ],
     lastUpdated: Date.UTC(2026, 2, 24, 9, 7, 0)
   }
+}
+
+function getElementChildren(element: unknown): TestElement[] {
+  if (!isValidElement<{ children?: ReactNode }>(element)) {
+    return []
+  }
+
+  return Children.toArray(element.props.children).filter((child): child is TestElement =>
+    isValidElement<{ children?: ReactNode; className?: string }>(child)
+  )
 }
 
 describe('CollapsedView helpers', () => {
@@ -112,13 +129,29 @@ describe('CollapsedView helpers', () => {
 })
 
 describe('floating window collapsed layout', () => {
+  it('keeps provider identity and usage metric in the same compact summary group', () => {
+    const view = CollapsedView({
+      providers: [createProviderUsageData()],
+      configs: [createProviderConfig()],
+      onToggleExpand: () => undefined
+    })
+
+    const rows = getElementChildren(view)
+    const rowChildren = getElementChildren(rows[0])
+    const summaryChildren = getElementChildren(rowChildren[0])
+
+    expect(rowChildren[0].props.className).toContain('collapsed-view__summary')
+    expect(summaryChildren[0].props.className).toContain('collapsed-view__identity')
+    expect(summaryChildren[1].props.className).toContain('collapsed-view__metric')
+  })
+
   it('keeps the collapsed width compact enough for the denser layout', () => {
     const provider = createProviderUsageData()
 
     const collapsedSize = getFloatingSize(false, 'normal', [provider])
     const expandedSize = getFloatingSize(true, 'normal', [provider])
 
-    expect(collapsedSize.width).toBe(224)
+    expect(collapsedSize.width).toBe(216)
     expect(collapsedSize.width).toBeLessThan(expandedSize.width)
   })
 })

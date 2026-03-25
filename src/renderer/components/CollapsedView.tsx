@@ -62,21 +62,23 @@ function CollapsedView({
               : `展开 ${providerMeta.name} 详情`
           }
         >
-          <span className="collapsed-view__identity">
-            <ProviderIcon
-              icon={providerMeta.icon}
-              fallbackIcon={providerMeta.fallbackIcon}
-              alt={providerMeta.name}
-              className="collapsed-view__icon"
-              imageClassName="collapsed-view__icon-image"
-              size={16}
-            />
-            <span className="collapsed-view__name">{providerMeta.name}</span>
-          </span>
+          <span className="collapsed-view__summary">
+            <span className="collapsed-view__identity">
+              <ProviderIcon
+                icon={providerMeta.icon}
+                fallbackIcon={providerMeta.fallbackIcon}
+                alt={providerMeta.name}
+                className="collapsed-view__icon"
+                imageClassName="collapsed-view__icon-image"
+                size={16}
+              />
+              <span className="collapsed-view__name">{providerMeta.name}</span>
+            </span>
 
-          <strong className="collapsed-view__metric">
-            {Math.round(primaryDimension.usedPercent)}%
-          </strong>
+            <strong className="collapsed-view__metric">
+              {Math.round(primaryDimension.usedPercent)}%
+            </strong>
+          </span>
 
           <span className="collapsed-view__refresh">
             {error ? (

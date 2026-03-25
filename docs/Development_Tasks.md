@@ -718,6 +718,17 @@
   5. 点击吸附态区域仍可恢复浮窗
   6. `npm run typecheck` 与 `npm test` 通过
 
+### 5.16 线上问题修复（Issue #38）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/CollapsedView.tsx` 的收缩态结构，将“厂商信息 + 主百分比”收敛到同一紧凑分组，避免百分比被独立列位推远
+  2. 调整 `src/renderer/components/CollapsedView.css` 与 `src/renderer/components/floatingWindowLayout.ts`，继续压缩收缩态 gap、行内 padding 与窗口宽度
+  3. 补充 `src/renderer/components/CollapsedView.test.ts` 回归测试，固化紧凑结构与新的收缩态宽度
+- [x] **验收标准**：
+  1. 收缩态中厂商名与主百分比之间不再存在明显空白，主百分比紧跟厂商信息显示
+  2. 刷新时间仍保持独立可读，错误状态提示点不会挤压主信息
+  3. `npm run typecheck` 与 `npm test` 通过
+
 ## 阶段 6：打包与发布
 
 > **前置依赖**：阶段 5 测试全部通过
