@@ -4,6 +4,8 @@
 
 Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI coding plan quota usage without constantly switching between browser tabs and provider dashboards.
 
+![App overview](docs/assets/readme/overview.png)
+
 ## Release Info
 
 - Current version: `v0.2.0`
@@ -28,7 +30,7 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 
 ### Settings Panel
 
-![Settings panel](docs/assets/readme/settings.png)
+![Settings panel](docs/assets/readme/settings-focus.png)
 
 ## Highlights
 
@@ -38,6 +40,7 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 - Auto refresh with retry backoff, defaulting to `60s`
 - Opacity control plus readability improvements for low-opacity scenarios
 - Persistent local configuration via `electron-store`
+- A glassmorphism-inspired dark UI that stays visible on the desktop without feeling noisy
 
 ## Provider Status
 
