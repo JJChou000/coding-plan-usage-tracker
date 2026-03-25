@@ -77,10 +77,6 @@
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.12);
 }
 
-.edge-handle__content--vertical {
-  transform: rotate(90deg);
-}
-
 .edge-handle__content--horizontal {
   transform: none;
 }
