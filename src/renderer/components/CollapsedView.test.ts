@@ -1,3 +1,7 @@
+import { readFileSync } from 'node:fs'
+
+import { createElement } from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it } from 'vitest'
 
 import type { ProviderConfig, ProviderUsageData } from '../../shared/types'
@@ -6,6 +10,7 @@ import {
   getDockedHandleDisplay,
   getPrimaryDimension
 } from './collapsedViewModel'
+import CollapsedView from './CollapsedView'
 import { getFloatingSize } from './floatingWindowLayout'
 
 function createProviderConfig(): ProviderConfig {
@@ -120,5 +125,30 @@ describe('floating window collapsed layout', () => {
 
     expect(collapsedSize.width).toBe(224)
     expect(collapsedSize.width).toBeLessThan(expandedSize.width)
+  })
+})
+
+describe('CollapsedView', () => {
+  it('applies the shared emphasis treatment to the primary metric and refresh time', () => {
+    const html = renderToStaticMarkup(
+      createElement(CollapsedView, {
+        providers: [createProviderUsageData()],
+        configs: [createProviderConfig()],
+        onToggleExpand: () => {}
+      })
+    )
+
+    expect(html).toContain('class="collapsed-view__metric floating-window__data-emphasis"')
+    expect(html).toContain(
+      'class="collapsed-view__refresh-text floating-window__data-emphasis"'
+    )
+  })
+
+  it('defines the shared emphasis text style used by metrics and time labels', () => {
+    const css = readFileSync(new URL('./FloatingWindow.css', import.meta.url), 'utf8')
+
+    expect(css).toContain('.floating-window__data-emphasis {')
+    expect(css).toContain('color: var(--text-primary);')
+    expect(css).toContain('text-shadow:')
   })
 })
