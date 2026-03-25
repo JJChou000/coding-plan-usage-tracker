@@ -61,6 +61,13 @@
   z-index: 1;
 }
 
+.floating-window__data-emphasis {
+  --floating-data-text-color: var(--text-primary);
+  --floating-data-text-shadow:
+    0 1px 10px rgba(0, 0, 0, 0.18),
+    0 0 12px rgba(255, 255, 255, 0.08);
+}
+
 .floating-window__placeholder {
   height: 100%;
   display: grid;

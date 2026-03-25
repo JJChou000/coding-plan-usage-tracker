@@ -788,3 +788,16 @@
   2. 新增厂商弹窗不再出现 `bailian` 可选项
   3. 已有 `bailian` 配置仍可继续在设置面板中显示和编辑
   4. `npm run typecheck` 通过
+
+## 线上问题修复记录
+
+### Issue #39：低透明度下时间文字可读性增强
+
+- [x] **操作**：
+  1. 在 `src/renderer/components/FloatingWindow.css` 中新增共享的数据文本强化样式，统一浮窗内关键数值与时间文本的对比度策略
+  2. 调整 `src/renderer/components/CollapsedView.tsx`、`src/renderer/components/CollapsedView.css`、`src/renderer/components/ExpandedView.tsx` 与 `src/renderer/components/ExpandedView.css`，让折叠态刷新时间和展开态重置时间与百分比共用强化表现
+  3. 补充 `src/renderer/components/CollapsedView.test.ts` 与 `src/renderer/components/ExpandedView.test.tsx` 回归测试，锁定“百分比与时间共用强化样式”的约束
+- [x] **验收标准**：
+  1. 低透明度场景下，折叠态刷新时间与展开态重置时间不再弱于百分比文字，能够保持稳定可读
+  2. 百分比与时间文字共用同一套视觉增强策略，避免后续样式漂移
+  3. `npm run typecheck` 与 `npm run test` 通过

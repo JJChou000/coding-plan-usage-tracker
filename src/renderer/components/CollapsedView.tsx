@@ -74,7 +74,7 @@ function CollapsedView({
             <span className="collapsed-view__name">{providerMeta.name}</span>
           </span>
 
-          <strong className="collapsed-view__metric">
+          <strong className="collapsed-view__metric floating-window__data-emphasis">
             {Math.round(primaryDimension.usedPercent)}%
           </strong>
 
@@ -83,7 +83,9 @@ function CollapsedView({
               <span className="collapsed-view__status-dot" aria-hidden="true" title={error} />
             ) : null}
             {refreshTimeLabel ? (
-              <span className="collapsed-view__refresh-text">{refreshTimeLabel}</span>
+              <span className="collapsed-view__refresh-text floating-window__data-emphasis">
+                {refreshTimeLabel}
+              </span>
             ) : null}
           </span>
         </button>
