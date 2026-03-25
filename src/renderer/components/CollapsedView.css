@@ -6,10 +6,10 @@
 .collapsed-view__row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   width: 100%;
   min-height: var(--collapsed-row-height);
-  padding: 0 6px;
+  padding: 0 4px;
   border: none;
   border-radius: 10px;
   background: transparent;
@@ -25,7 +25,7 @@
 .collapsed-view__summary {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
   flex: 1 1 auto;
 }
@@ -46,9 +46,9 @@
 .collapsed-view__identity {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
   min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 1 auto;
 }
 
 .collapsed-view__icon {
@@ -77,7 +77,7 @@
 
 .collapsed-view__metric {
   flex-shrink: 0;
-  min-width: 34px;
+  min-width: 32px;
   color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
@@ -90,9 +90,10 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 3px;
+  gap: 2px;
+  margin-left: auto;
   flex-shrink: 0;
-  min-width: 33px;
+  min-width: 31px;
 }
 
 .collapsed-view__status-dot {

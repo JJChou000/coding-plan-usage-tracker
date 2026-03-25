@@ -151,7 +151,7 @@ describe('floating window collapsed layout', () => {
     const collapsedSize = getFloatingSize(false, 'normal', [provider])
     const expandedSize = getFloatingSize(true, 'normal', [provider])
 
-    expect(collapsedSize.width).toBe(216)
+    expect(collapsedSize.width).toBe(176)
     expect(collapsedSize.width).toBeLessThan(expandedSize.width)
   })
 })
