@@ -70,13 +70,14 @@
 
 .collapsed-view__metric {
   min-width: 32px;
-  color: var(--text-primary);
+  color: var(--floating-data-text-color, var(--text-primary));
   font-size: 12px;
   font-weight: 600;
   line-height: 1;
   justify-self: center;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  text-shadow: var(--floating-data-text-shadow, none);
 }
 
 .collapsed-view__refresh {
@@ -97,8 +98,10 @@
 }
 
 .collapsed-view__refresh-text {
-  color: var(--text-secondary);
+  color: var(--floating-data-text-color, var(--text-primary));
   font-size: 11px;
+  font-weight: 600;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  text-shadow: var(--floating-data-text-shadow, none);
 }

@@ -59,6 +59,20 @@ describe('ExpandedView', () => {
     expect(html).toContain('2026-04-01 00:00')
   })
 
+  it('applies the shared emphasis treatment to both percentage and reset time', () => {
+    const html = renderToStaticMarkup(
+      <ExpandedView
+        providers={[createProviderUsageData()]}
+        configs={[createProviderConfig()]}
+        onToggleExpand={() => {}}
+        onToggleDimension={() => {}}
+      />
+    )
+
+    expect(html).toContain('class="expanded-view__percent floating-window__data-emphasis"')
+    expect(html).toContain('class="expanded-view__reset floating-window__data-emphasis"')
+  })
+
   it('reserves a dedicated reset-time column in CSS to avoid truncation regressions', () => {
     const css = readFileSync(new URL('./ExpandedView.css', import.meta.url), 'utf8')
 

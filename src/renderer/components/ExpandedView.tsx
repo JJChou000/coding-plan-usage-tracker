@@ -148,11 +148,13 @@ function ExpandedView({
                   <span className="expanded-view__bar">
                     <ProgressBar percent={dimension.usedPercent} size="sm" />
                   </span>
-                  <strong className="expanded-view__percent">
+                  <strong className="expanded-view__percent floating-window__data-emphasis">
                     {Math.round(dimension.usedPercent)}%
                   </strong>
                   {dimension.resetTime ? (
-                    <span className="expanded-view__reset">{dimension.resetTime}</span>
+                    <span className="expanded-view__reset floating-window__data-emphasis">
+                      {dimension.resetTime}
+                    </span>
                   ) : (
                     <span className="expanded-view__reset expanded-view__reset--empty" />
                   )}

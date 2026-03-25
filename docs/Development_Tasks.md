@@ -718,14 +718,26 @@
   5. 点击吸附态区域仍可恢复浮窗
   6. `npm run typecheck` 与 `npm test` 通过
 
-### 5.16 线上问题修复（Issue #38）
+### 5.16 线上问题修复（Issue #40）
 
 - [x] **操作**：
-  1. 调整 `src/renderer/components/CollapsedView.tsx` 的收缩态结构，将“厂商信息 + 主百分比”收敛到同一紧凑分组，避免百分比被独立列位推远
-  2. 调整 `src/renderer/components/CollapsedView.css` 与 `src/renderer/components/floatingWindowLayout.ts`，继续压缩收缩态 gap、行内 padding 与窗口宽度
-  3. 补充 `src/renderer/components/CollapsedView.test.ts` 回归测试，固化紧凑结构与新的收缩态宽度
+  1. 调整 `src/renderer/components/EdgeHandle.tsx`，取消左右吸附时主用量文本的竖排类名分支，统一改为横向单行展示
+  2. 清理 `src/renderer/components/EdgeHandle.css` 中已失效的竖排旋转样式，避免后续再次回到旧表现
+  3. 补充 `src/renderer/components/EdgeHandle.test.tsx` 回归测试，锁定左右吸附时使用横向类名、不得继续渲染竖排类名
 - [x] **验收标准**：
-  1. 收缩态中厂商名与主百分比之间不再存在明显空白，主百分比紧跟厂商信息显示
+  1. 左右吸附态中的数字以横向文本显示，并保持单行
+  2. 吸附态仍然只显示纯数字或 `--` 占位，不重新引入 `%`
+  3. 无主用量时仍保留箭头回退逻辑，点击吸附态区域仍可恢复浮窗
+  4. `npm test -- EdgeHandle.test.tsx`、`npm run typecheck` 与 `npm test` 通过
+
+### 5.17 线上问题修复（Issue #38）
+
+- [x] **操作**：
+  1. 调整 `src/renderer/components/CollapsedView.css` 的三列栅格、gap、padding 与主百分比对齐策略，进一步压缩厂商名与百分比之间的无效空白
+  2. 调整 `src/renderer/components/floatingWindowLayout.ts`，将收缩态宽度继续收紧到更贴合常驻场景的尺寸
+  3. 补充 `src/renderer/components/CollapsedView.test.ts` 回归测试，锁定紧凑布局规则，并确保其与低透明度文字强化样式可以同时存在
+- [x] **验收标准**：
+  1. 收缩态中厂商名与主百分比之间不再存在明显空白，主百分比保持贴近主信息区域显示
   2. 刷新时间仍保持独立可读，错误状态提示点不会挤压主信息
   3. `npm run typecheck` 与 `npm test` 通过
 
@@ -799,3 +811,16 @@
   2. 新增厂商弹窗不再出现 `bailian` 可选项
   3. 已有 `bailian` 配置仍可继续在设置面板中显示和编辑
   4. `npm run typecheck` 通过
+
+## 线上问题修复记录
+
+### Issue #39：低透明度下时间文字可读性增强
+
+- [x] **操作**：
+  1. 在 `src/renderer/components/FloatingWindow.css` 中新增共享的数据文本强化样式，统一浮窗内关键数值与时间文本的对比度策略
+  2. 调整 `src/renderer/components/CollapsedView.tsx`、`src/renderer/components/CollapsedView.css`、`src/renderer/components/ExpandedView.tsx` 与 `src/renderer/components/ExpandedView.css`，让折叠态刷新时间和展开态重置时间与百分比共用强化表现
+  3. 补充 `src/renderer/components/CollapsedView.test.ts` 与 `src/renderer/components/ExpandedView.test.tsx` 回归测试，锁定“百分比与时间共用强化样式”的约束
+- [x] **验收标准**：
+  1. 低透明度场景下，折叠态刷新时间与展开态重置时间不再弱于百分比文字，能够保持稳定可读
+  2. 百分比与时间文字共用同一套视觉增强策略，避免后续样式漂移
+  3. `npm run typecheck` 与 `npm run test` 通过
