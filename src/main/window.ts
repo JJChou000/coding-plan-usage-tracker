@@ -7,6 +7,8 @@ import { getConfig, setConfig } from './configStore'
 
 const FLOATING_WINDOW_WIDTH = 320
 const FLOATING_WINDOW_HEIGHT = 120
+const RESTORED_WINDOW_WIDTH = 176
+const RESTORED_WINDOW_HEIGHT = 52
 const SETTINGS_WINDOW_WIDTH = 960
 const SETTINGS_WINDOW_HEIGHT = 720
 const SETTINGS_WINDOW_MIN_WIDTH = 720
@@ -240,6 +242,37 @@ export function ensureFloatingWindowVisible(
   }
 
   return targetPosition
+}
+
+export function restoreFloatingWindow(win: BrowserWindow): { x: number; y: number } {
+  const currentBounds = win.getBounds()
+  const workArea = getDisplayWorkArea(win)
+  const restoredBounds = {
+    ...currentBounds,
+    width: Math.max(RESTORED_WINDOW_WIDTH, currentBounds.width),
+    height: Math.max(RESTORED_WINDOW_HEIGHT, currentBounds.height)
+  }
+  const restoredPosition = getClampedPosition(restoredBounds, workArea)
+
+  win.setSize(restoredBounds.width, restoredBounds.height)
+  win.setPosition(restoredPosition.x, restoredPosition.y)
+
+  if (win.isMinimized()) {
+    win.restore()
+  }
+
+  if (!win.isVisible()) {
+    win.show()
+  }
+
+  win.focus()
+
+  setConfig({
+    windowState: 'normal',
+    windowPosition: restoredPosition
+  })
+
+  return restoredPosition
 }
 
 export function createFloatingWindow(): BrowserWindow {

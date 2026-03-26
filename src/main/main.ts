@@ -5,7 +5,13 @@ import { electronApp, optimizer } from '@electron-toolkit/utils'
 
 import { getConfig, setConfig } from './configStore'
 import { createTray, openSettingsFromTray, refreshFromTray, showMainWindowFromTray } from './tray'
-import { createFloatingWindow, resizeWindow, setupEdgeDocking, setupWindowDrag } from './window'
+import {
+  createFloatingWindow,
+  resizeWindow,
+  restoreFloatingWindow,
+  setupEdgeDocking,
+  setupWindowDrag
+} from './window'
 import type { AppConfig } from '../shared/types'
 
 let mainWindow: BrowserWindow | null = null
@@ -436,6 +442,14 @@ function registerE2EDebugApi(): void {
     showMainWindowFromTray: () => {
       showMainWindowFromTray(mainWindow)
     },
+    restoreFloatingWindow: () => {
+      if (!mainWindow || mainWindow.isDestroyed()) {
+        return
+      }
+
+      restoreFloatingWindow(mainWindow)
+      broadcastConfigUpdate(getConfig())
+    },
     refreshFromTray: () => {
       refreshFromTray(mainWindow)
     },
@@ -512,6 +526,15 @@ function bindWindowIpc(): void {
   if (resizeListenerRegistered) {
     return
   }
+
+  ipcMain.handle('window:restore', async () => {
+    if (!mainWindow || mainWindow.isDestroyed()) {
+      return
+    }
+
+    restoreFloatingWindow(mainWindow)
+    broadcastConfigUpdate(getConfig())
+  })
 
   ipcMain.on('window:resize', (_event, width, height) => {
     if (

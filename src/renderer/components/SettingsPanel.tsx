@@ -30,6 +30,12 @@ type StatusTone = 'ok' | 'error' | 'empty'
 
 const REFRESH_OPTIONS = [30, 60, 120, 300] as const
 const HIDDEN_PROVIDER_IDS = new Set(['bailian'])
+const RELEASE_VERSION = '0.2.2'
+const RELEASE_HIGHLIGHTS = ['设置面板新增“重置浮窗位置”，可在浮窗异常时手动拉回可视区域。']
+const RELEASE_KNOWN_ISSUES = [
+  '浮窗吸附到屏幕上边或左边时仍可能出现不可见或异常行为。',
+  '当前版本建议优先只吸附在右边，顶部和左侧吸附留待下一步继续修复。'
+]
 
 function getProviderFields(providerId: string): AuthField[] {
   return getProvider(providerId)?.getAuthFields() ?? []
@@ -95,6 +101,19 @@ async function persistConfig(
   return true
 }
 
+export async function restoreFloatingWindowFromSettings(): Promise<boolean> {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.electronAPI?.restoreFloatingWindow !== 'function'
+  ) {
+    return false
+  }
+
+  await window.electronAPI.restoreFloatingWindow()
+
+  return true
+}
+
 function SettingsPanel(): React.JSX.Element {
   const { state, dispatch } = useAppContext()
   const [dialog, setDialog] = useState<ProviderDialogState | null>(null)
@@ -113,6 +132,9 @@ function SettingsPanel(): React.JSX.Element {
   const opacityPercent = Math.round(
     normalizeWindowOpacity(state.config.windowOpacity ?? DEFAULT_WINDOW_OPACITY) * 100
   )
+  const canRestoreWindow =
+    typeof window !== 'undefined' &&
+    typeof window.electronAPI?.restoreFloatingWindow === 'function'
 
   const openAddDialog = (): void => {
     if (availableProviders.length === 0) {
@@ -267,6 +289,21 @@ function SettingsPanel(): React.JSX.Element {
     }
   }
 
+  const handleRestoreWindow = async (): Promise<void> => {
+    try {
+      const restored = await restoreFloatingWindowFromSettings()
+
+      if (!restored) {
+        setSaveError('当前环境不支持重置浮窗位置。')
+        return
+      }
+
+      setSaveError(null)
+    } catch {
+      setSaveError('重置浮窗位置失败，请稍后再试。')
+    }
+  }
+
   return (
     <section className="settings-panel">
       <div className="settings-panel__content">
@@ -382,6 +419,38 @@ function SettingsPanel(): React.JSX.Element {
           )}
         </section>
 
+        <section className="settings-panel__section settings-panel__release">
+          <div className="settings-panel__section-head">
+            <div>
+              <h2 className="settings-panel__section-title">v{RELEASE_VERSION} 版本更新</h2>
+              <p className="settings-panel__section-copy">
+                本次版本先发布可用的恢复能力，并同步展示当前已知问题，方便安装后第一时间避开风险用法。
+              </p>
+            </div>
+            <span className="settings-panel__release-badge">Release {RELEASE_VERSION}</span>
+          </div>
+
+          <div className="settings-panel__release-grid">
+            <article className="settings-panel__release-card">
+              <h3 className="settings-panel__release-title">本次更新</h3>
+              <ul className="settings-panel__release-list">
+                {RELEASE_HIGHLIGHTS.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+
+            <article className="settings-panel__release-card settings-panel__release-card--warning">
+              <h3 className="settings-panel__release-title">已知问题</h3>
+              <ul className="settings-panel__release-list">
+                {RELEASE_KNOWN_ISSUES.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </article>
+          </div>
+        </section>
+
         <footer className="settings-panel__footer">
           <div>
             <h2 className="settings-panel__section-title">显示与刷新</h2>
@@ -390,40 +459,51 @@ function SettingsPanel(): React.JSX.Element {
             </p>
           </div>
 
-          <div className="settings-panel__control-grid">
-            <label className="settings-panel__range-wrap">
-              <span className="settings-panel__range-head">
-                <span className="settings-panel__select-label">浮窗透明度</span>
-                <strong className="settings-panel__range-value">{opacityPercent}%</strong>
-              </span>
-              <input
-                className="settings-panel__range"
-                type="range"
-                min={MIN_WINDOW_OPACITY}
-                max={MAX_WINDOW_OPACITY}
-                step={WINDOW_OPACITY_STEP}
-                value={normalizeWindowOpacity(state.config.windowOpacity)}
-                onChange={(event) => void handleWindowOpacityChange(Number(event.target.value))}
-              />
-              <span className="settings-panel__range-hint">
-                支持 10% - 100%，低透明度下仍会保留基础轮廓和交互可见性。
-              </span>
-            </label>
+          <div className="settings-panel__footer-controls">
+            <button
+              type="button"
+              className="settings-panel__button settings-panel__button--ghost settings-panel__recovery-button"
+              disabled={!canRestoreWindow}
+              onClick={() => void handleRestoreWindow()}
+            >
+              重置浮窗位置
+            </button>
 
-            <label className="settings-panel__select-wrap">
-              <span className="settings-panel__select-label">自动刷新</span>
-              <select
-                className="settings-panel__select"
-                value={state.config.refreshInterval}
-                onChange={(event) => void handleRefreshChange(Number(event.target.value))}
-              >
-                {REFRESH_OPTIONS.map((option) => (
-                  <option key={option} value={option}>
-                    {option}s
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="settings-panel__control-grid">
+              <label className="settings-panel__range-wrap">
+                <span className="settings-panel__range-head">
+                  <span className="settings-panel__select-label">浮窗透明度</span>
+                  <strong className="settings-panel__range-value">{opacityPercent}%</strong>
+                </span>
+                <input
+                  className="settings-panel__range"
+                  type="range"
+                  min={MIN_WINDOW_OPACITY}
+                  max={MAX_WINDOW_OPACITY}
+                  step={WINDOW_OPACITY_STEP}
+                  value={normalizeWindowOpacity(state.config.windowOpacity)}
+                  onChange={(event) => void handleWindowOpacityChange(Number(event.target.value))}
+                />
+                <span className="settings-panel__range-hint">
+                  支持 10% - 100%，低透明度下仍会保留基础轮廓和交互可见性。
+                </span>
+              </label>
+
+              <label className="settings-panel__select-wrap">
+                <span className="settings-panel__select-label">自动刷新</span>
+                <select
+                  className="settings-panel__select"
+                  value={state.config.refreshInterval}
+                  onChange={(event) => void handleRefreshChange(Number(event.target.value))}
+                >
+                  {REFRESH_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}s
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           </div>
         </footer>
       </div>

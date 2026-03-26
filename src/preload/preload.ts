@@ -20,6 +20,7 @@ const electronAPI = {
   setWindowPosition: (pos: { x: number; y: number }) =>
     ipcRenderer.send('window:set-position', pos),
   setWindowState: (state: string) => ipcRenderer.send('window:set-state', state),
+  restoreFloatingWindow: () => ipcRenderer.invoke('window:restore') as Promise<void>,
   resizeWindow: (width: number, height: number) => ipcRenderer.send('window:resize', width, height),
   onRefresh: (callback: () => void) => {
     const listener = (): void => callback()

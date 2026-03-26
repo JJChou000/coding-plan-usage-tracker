@@ -35,12 +35,15 @@ vi.mock('electron', () => ({
 import { screen, type BrowserWindow } from 'electron'
 import { getConfig, setConfig } from './configStore'
 
-import { resizeWindow } from './window'
+import { resizeWindow, restoreFloatingWindow } from './window'
 
 function createMockWindow(initialBounds: { x: number; y: number; width: number; height: number }): {
   win: BrowserWindow
   setPosition: ReturnType<typeof vi.fn>
   setSize: ReturnType<typeof vi.fn>
+  show: ReturnType<typeof vi.fn>
+  focus: ReturnType<typeof vi.fn>
+  restore: ReturnType<typeof vi.fn>
 } {
   let bounds = { ...initialBounds }
   const setSize = vi.fn((width: number, height: number) => {
@@ -57,15 +60,26 @@ function createMockWindow(initialBounds: { x: number; y: number; width: number; 
       y
     }
   })
+  const show = vi.fn()
+  const focus = vi.fn()
+  const restore = vi.fn()
 
   return {
     win: {
       getBounds: () => ({ ...bounds }),
       setPosition,
-      setSize
+      setSize,
+      isMinimized: () => true,
+      restore,
+      isVisible: () => false,
+      show,
+      focus
     } as unknown as BrowserWindow,
     setPosition,
-    setSize
+    setSize,
+    show,
+    focus,
+    restore
   }
 }
 
@@ -105,6 +119,28 @@ describe('resizeWindow', () => {
     expect(setPosition).toHaveBeenCalledWith(1600, 120)
     expect(setConfig).toHaveBeenCalledWith({
       windowPosition: { x: 1600, y: 120 }
+    })
+  })
+
+  it('restores a docked floating window back into the visible work area', () => {
+    const { win, setPosition, setSize, restore, show, focus } = createMockWindow({
+      x: -240,
+      y: 120,
+      width: 24,
+      height: 52
+    })
+
+    const restoredPosition = restoreFloatingWindow(win)
+
+    expect(setSize).toHaveBeenCalledWith(176, 52)
+    expect(setPosition).toHaveBeenCalledWith(0, 120)
+    expect(restore).toHaveBeenCalledTimes(1)
+    expect(show).toHaveBeenCalledTimes(1)
+    expect(focus).toHaveBeenCalledTimes(1)
+    expect(restoredPosition).toEqual({ x: 0, y: 120 })
+    expect(setConfig).toHaveBeenCalledWith({
+      windowState: 'normal',
+      windowPosition: { x: 0, y: 120 }
     })
   })
 })
