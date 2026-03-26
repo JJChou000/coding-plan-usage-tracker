@@ -2,6 +2,26 @@ appId: com.codingplan.usagetracker
 productName: Coding Plan Usage Tracker
 directories:
   output: dist
+files:
+  - '**/*'
+  - '!src{,/**/*}'
+  - '!docs{,/**/*}'
+  - '!output{,/**/*}'
+  - '!scripts{,/**/*}'
+  - '!.worktrees{,/**/*}'
+  - '!.codex{,/**/*}'
+  - '!.vscode{,/**/*}'
+  - '!dev-server.log'
+  - '!asar-list.txt'
+  - '!out/**/*.png'
+  - '!out/**/*.log'
+  - '!out/stage4-acceptance{,/**/*}'
+  - '!out/stage4-test-userdata{,/**/*}'
+  - '!out/*.png'
+  - '!out/*.log'
+  - '!out/*.json'
+  - '!out/*.txt'
+  - '!out/*.html'
 win:
   signAndEditExecutable: false
   target:
