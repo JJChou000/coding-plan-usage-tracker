@@ -382,20 +382,12 @@ export function useWindowDrag({
             lastNormalPositionRef.current = nextPosition
 
             if (nextDockState) {
-              const dockedSize =
-                nextDockState === 'docked-left' || nextDockState === 'docked-right'
-                  ? {
-                      width: FLOATING_WINDOW_LAYOUT.handleWidth,
-                      height: activeSize.handleLength
-                    }
-                  : {
-                      width: activeSize.handleLength,
-                      height: FLOATING_WINDOW_LAYOUT.handleWidth
-                    }
-
               window.electronAPI?.setWindowState?.({
                 state: nextDockState,
-                size: dockedSize
+                size: {
+                  width: FLOATING_WINDOW_LAYOUT.handleWidth,
+                  height: activeSize.handleLength
+                }
               })
               dispatch({
                 type: 'SET_CONFIG',

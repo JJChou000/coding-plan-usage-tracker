@@ -41,12 +41,12 @@ describe('SettingsPanel window recovery', () => {
     } as never
   })
 
-  it('renders the reset floating window action and the 0.2.2 release note', () => {
+  it('renders the reset floating window action without the release note block', () => {
     const html = renderToStaticMarkup(createElement(SettingsPanel))
 
     expect(html).toContain('重置浮窗位置')
-    expect(html).toContain('v0.2.2 版本更新')
-    expect(html).toContain('当前版本建议优先只吸附在右边')
+    expect(html).not.toContain('v0.2.2 版本更新')
+    expect(html).not.toContain('当前版本建议优先只吸附在右边')
   })
 
   it('delegates the reset action to electronAPI.restoreFloatingWindow', async () => {

@@ -149,20 +149,8 @@ export function resolvePreviewDockState(
   size: FloatingWindowSize,
   arena: DOMRect
 ): DockState | null {
-  if (position.x <= FLOATING_WINDOW_LAYOUT.dockThreshold) {
-    return 'docked-left'
-  }
-
   if (position.x + size.width >= arena.width - FLOATING_WINDOW_LAYOUT.dockThreshold) {
     return 'docked-right'
-  }
-
-  if (position.y <= FLOATING_WINDOW_LAYOUT.dockThreshold) {
-    return 'docked-top'
-  }
-
-  if (position.y + size.height >= arena.height - FLOATING_WINDOW_LAYOUT.dockThreshold) {
-    return 'docked-bottom'
   }
 
   return null
@@ -173,22 +161,9 @@ export function resolveNativeDockState(
   size: FloatingWindowSize
 ): DockState | null {
   const maxWidth = screen.availWidth
-  const maxHeight = screen.availHeight
-
-  if (position.x <= FLOATING_WINDOW_LAYOUT.dockThreshold) {
-    return 'docked-left'
-  }
 
   if (position.x + size.width >= maxWidth - FLOATING_WINDOW_LAYOUT.dockThreshold) {
     return 'docked-right'
-  }
-
-  if (position.y <= FLOATING_WINDOW_LAYOUT.dockThreshold) {
-    return 'docked-top'
-  }
-
-  if (position.y + size.height >= maxHeight - FLOATING_WINDOW_LAYOUT.dockThreshold) {
-    return 'docked-bottom'
   }
 
   return null
