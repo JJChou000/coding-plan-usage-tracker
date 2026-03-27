@@ -7,6 +7,6 @@ out
 docs/
 .agent/
 output/
-.env.local
+.env*
 .codex/
 .worktrees/

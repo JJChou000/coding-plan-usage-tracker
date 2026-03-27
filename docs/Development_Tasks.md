@@ -872,3 +872,10 @@
   1. 右侧吸附后，主进程中的 `BrowserWindow` 实际 bounds 收缩到 `24x52`
   2. 右侧把手左侧不再存在大块透明点击遮挡区域
   3. `npm run typecheck`、`npm test` 与 `npm run build:app` 通过
+
+## v0.3.0 发布收尾
+
+- [x] 将项目版本升级到 `0.3.0`，同步更新 `package.json`、`package-lock.json`、`README` 与 `docs/Changelog.md`。
+- [x] 收紧 `electron-builder` 打包清单，显式排除 `.env*`、`.npmrc` 与开发辅助文件，避免本地密钥和无关文件进入安装包。
+- [x] 重新构建 Windows NSIS 安装包，并确认正式发布资产应使用 `Setup` 安装包而不是 `win-unpacked/` 中的原始可执行文件。
+- [x] 对产物做敏感信息反查，确认未带入本地 API Key / PAT。

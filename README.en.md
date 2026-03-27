@@ -8,7 +8,7 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 
 ## Release Info
 
-- Current version: `v0.2.0`
+- Current version: `v0.3.0`
 - Target platform: Windows
 - Stack: Electron 34, React 19, TypeScript, Vite 6
 - Latest release: [GitHub Releases](https://github.com/JJChou000/coding-plan-usage-tracker/releases)
@@ -63,6 +63,7 @@ Coding Plan Usage Tracker is a Windows desktop floating widget for monitoring AI
 ### Option 1: Download a release build
 
 Download the latest Windows installer from [GitHub Releases](https://github.com/JJChou000/coding-plan-usage-tracker/releases).
+For public distribution, use `Coding.Plan.Usage.Tracker.Setup.0.3.0.exe` instead of anything inside `win-unpacked/`.
 
 ### Option 2: Build locally
 
@@ -72,6 +73,7 @@ npm run build
 ```
 
 The installer will be generated in `dist/`.
+For release, the NSIS installer `Coding Plan Usage Tracker Setup 0.3.0.exe` should stay around 80 MB.
 
 ## Development
 
