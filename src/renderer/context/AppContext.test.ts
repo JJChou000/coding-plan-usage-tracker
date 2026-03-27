@@ -18,6 +18,15 @@ function createProviderUsageData(): ProviderUsageData {
         isChecked: true
       },
       {
+        id: 'token_weekly',
+        label: '每周用量',
+        usedPercent: 25,
+        used: 1500,
+        total: 6000,
+        resetTime: '2026-03-31 00:00',
+        isChecked: false
+      },
+      {
         id: 'mcp_monthly',
         label: 'MCP 每月额度',
         usedPercent: 12,
@@ -73,9 +82,8 @@ describe('normalizeCheckedDimensions', () => {
   })
 
   it('falls back to the first available dimension when no checked dimension remains valid', () => {
-    expect(normalizeCheckedDimensions(['missing'], ['token_5h', 'mcp_monthly'])).toEqual([
-      'token_5h'
-    ])
+    expect(normalizeCheckedDimensions(['missing'], ['token_5h', 'token_weekly', 'mcp_monthly']))
+      .toEqual(['token_5h'])
   })
 })
 
@@ -97,6 +105,7 @@ describe('appReducer', () => {
       }))
     ).toEqual([
       { id: 'token_5h', isChecked: false },
+      { id: 'token_weekly', isChecked: false },
       { id: 'mcp_monthly', isChecked: true }
     ])
   })
@@ -149,7 +158,31 @@ describe('appReducer', () => {
       }))
     ).toEqual([
       { id: 'token_5h', isChecked: false },
+      { id: 'token_weekly', isChecked: false },
       { id: 'mcp_monthly', isChecked: true }
+    ])
+  })
+
+  it('falls back to token_5h when a previously selected dimension is no longer available', () => {
+    const nextState = appReducer(createState(['token_weekly']), {
+      type: 'SET_USAGE_DATA',
+      payload: {
+        ...createProviderUsageData(),
+        dimensions: createProviderUsageData().dimensions.filter(
+          (dimension) => dimension.id !== 'token_weekly'
+        )
+      }
+    })
+
+    expect(nextState.config.providers[0]?.checkedDimensions).toEqual(['token_5h'])
+    expect(
+      nextState.usageData.get('zhipu')?.dimensions.map((dimension) => ({
+        id: dimension.id,
+        isChecked: dimension.isChecked
+      }))
+    ).toEqual([
+      { id: 'token_5h', isChecked: true },
+      { id: 'mcp_monthly', isChecked: false }
     ])
   })
 })

@@ -313,6 +313,15 @@ function formatUsageFetchError(providerId: string, error: unknown): string {
 
 function createZhipuSuccessFixtureResponse(): UsageFetchResponse {
   const now = new Date()
+  const nextWeeklyResetTime = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 7,
+    0,
+    0,
+    0,
+    0
+  ).getTime()
   const nextMonthResetTime = new Date(
     now.getFullYear(),
     now.getMonth() + 1,
@@ -330,12 +339,24 @@ function createZhipuSuccessFixtureResponse(): UsageFetchResponse {
         limits: [
           {
             type: 'TOKENS_LIMIT',
+            unit: 3,
+            number: 5,
             usage: 200000,
             currentValue: 62000,
             nextResetTime: Date.now() + 2 * 60 * 60 * 1000
           },
           {
+            type: 'TOKENS_LIMIT',
+            unit: 6,
+            number: 1,
+            usage: 6000,
+            currentValue: 1500,
+            nextResetTime: nextWeeklyResetTime
+          },
+          {
             type: 'TIME_LIMIT',
+            unit: 5,
+            number: 1,
             usage: 2000,
             currentValue: 240,
             nextResetTime: nextMonthResetTime

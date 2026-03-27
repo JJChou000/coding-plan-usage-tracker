@@ -33,12 +33,21 @@ const PREVIEW_STATE: AppState = {
         dimensions: [
           {
             id: 'token_5h',
-            label: '每5小时 Token',
+            label: '每 5 小时 Token',
             usedPercent: 31,
             used: 62000,
             total: 200000,
             resetTime: '12:00',
             isChecked: true
+          },
+          {
+            id: 'token_weekly',
+            label: '每周用量',
+            usedPercent: 25,
+            used: 1500,
+            total: 6000,
+            resetTime: '2026-03-31 00:00',
+            isChecked: false
           },
           {
             id: 'mcp_monthly',

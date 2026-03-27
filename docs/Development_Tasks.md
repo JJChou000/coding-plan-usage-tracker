@@ -825,6 +825,20 @@
   2. 百分比与时间文字共用同一套视觉增强策略，避免后续样式漂移
   3. `npm run typecheck` 与 `npm run test` 通过
 
+### Issue #31：兼容智谱新老套餐周限额展示
+
+- [x] **操作**：
+  1. 调整 `src/renderer/providers/zhipuProvider.ts` 的智谱额度解析逻辑，新增对 `TOKENS_LIMIT + unit=6 + number=1` 的显式识别，仅在命中新套餐周限额字段时生成“每周用量”维度
+  2. 保留老套餐兼容路径：未识别出周限额字段时，继续仅展示“每 5 小时 Token”与 “MCP 每月额度”，不基于双 `TOKENS_LIMIT` 或更长重置周期做隐式推断
+  3. 同步更新 `src/main/main.ts` 与 `src/renderer/App.tsx` 的智谱 fixture / 预览数据，使新套餐场景展示顺序固定为“每 5 小时 Token → 每周用量 → MCP 每月额度”
+  4. 补充 `src/renderer/providers/zhipuProvider.test.ts`、`src/renderer/components/ExpandedView.test.tsx`、`src/renderer/components/CollapsedView.test.ts` 与 `src/renderer/context/AppContext.test.ts` 回归测试，覆盖新老套餐维度识别、顺序、单选回退和展开高度
+- [x] **验收标准**：
+  1. 新套餐 fixture 场景下可稳定解析并展示 3 个智谱维度，顺序固定为“每 5 小时 / 每周 / MCP 每月”
+  2. 老套餐场景下仍保持当前 2 维度行为，不会误判生成“每周用量”
+  3. 折叠态仍只显示单主维度，展开态与窗口尺寸计算对新增维度兼容稳定
+  4. `npm run typecheck`、`npm run test` 与 `npm run build:app` 通过
+  5. 受当前账号限制，本次不包含新套餐周限额真实数据联调，仅保留自动化与 fixture 验证
+
 ## 发布整理记录
 
 ### v0.2.0 发布收尾

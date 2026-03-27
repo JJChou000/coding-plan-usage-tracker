@@ -44,6 +44,15 @@ function createProviderUsageData(): ProviderUsageData {
         isChecked: true
       },
       {
+        id: 'token_weekly',
+        label: '每周用量',
+        usedPercent: 25,
+        used: 1500,
+        total: 6000,
+        resetTime: '2026-03-31 00:00',
+        isChecked: false
+      },
+      {
         id: 'mcp_monthly',
         label: 'MCP 每月额度',
         usedPercent: 12,
@@ -167,6 +176,21 @@ describe('floating window collapsed layout', () => {
 
     expect(collapsedSize.width).toBe(176)
     expect(collapsedSize.width).toBeLessThan(expandedSize.width)
+  })
+
+  it('increases expanded height for the additional weekly dimension while keeping collapsed size stable', () => {
+    const provider = createProviderUsageData()
+    const legacyProvider: ProviderUsageData = {
+      ...provider,
+      dimensions: provider.dimensions.filter((dimension) => dimension.id !== 'token_weekly')
+    }
+
+    const collapsedSize = getFloatingSize(false, 'normal', [provider])
+    const weeklyExpandedSize = getFloatingSize(true, 'normal', [provider])
+    const legacyExpandedSize = getFloatingSize(true, 'normal', [legacyProvider])
+
+    expect(collapsedSize.width).toBe(176)
+    expect(weeklyExpandedSize.height).toBeGreaterThan(legacyExpandedSize.height)
   })
 })
 
