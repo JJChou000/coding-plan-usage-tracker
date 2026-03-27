@@ -13,17 +13,21 @@ const SETTINGS_WINDOW_WIDTH = 960
 const SETTINGS_WINDOW_HEIGHT = 720
 const SETTINGS_WINDOW_MIN_WIDTH = 720
 const SETTINGS_WINDOW_MIN_HEIGHT = 560
-const EDGE_DOCK_THRESHOLD = 20
 const HANDLE_WIDTH = 24
 const MIN_WINDOW_WIDTH = HANDLE_WIDTH
 const MIN_WINDOW_HEIGHT = HANDLE_WIDTH
-const ANIMATION_STEPS = 8
-const ANIMATION_INTERVAL_MS = 12
 
 let dragListenerRegistered = false
 let dockingListenerRegistered = false
 
 type ManagedWindowKind = 'floating' | 'settings'
+type DockedWindowState = Exclude<AppConfig['windowState'], 'normal'>
+type FloatingWindowBounds = Pick<Electron.Rectangle, 'x' | 'y' | 'width' | 'height'>
+type FloatingWindowSize = Pick<Electron.Rectangle, 'width' | 'height'>
+type WindowStateRequest = {
+  state: AppConfig['windowState']
+  size?: FloatingWindowSize
+}
 
 const windowInstances = new WeakMap<BrowserWindow, ManagedWindowKind>()
 
@@ -35,6 +39,37 @@ function isWindowState(value: unknown): value is AppConfig['windowState'] {
     value === 'docked-top' ||
     value === 'docked-bottom'
   )
+}
+
+function isFloatingWindowSize(value: unknown): value is FloatingWindowSize {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  const size = value as Record<string, unknown>
+
+  return typeof size.width === 'number' && typeof size.height === 'number'
+}
+
+function resolveWindowStateRequest(value: unknown): WindowStateRequest | null {
+  if (isWindowState(value)) {
+    return { state: value }
+  }
+
+  if (typeof value !== 'object' || value === null) {
+    return null
+  }
+
+  const request = value as Record<string, unknown>
+
+  if (!isWindowState(request.state)) {
+    return null
+  }
+
+  return {
+    state: request.state,
+    size: isFloatingWindowSize(request.size) ? request.size : undefined
+  }
 }
 
 function hasPointShape(value: unknown): value is { x: number; y: number } {
@@ -49,6 +84,10 @@ function hasPointShape(value: unknown): value is { x: number; y: number } {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max)
+}
+
+function isDockedWindowState(value: AppConfig['windowState']): value is DockedWindowState {
+  return value !== 'normal'
 }
 
 function getWorkAreaForPoint(point: { x: number; y: number }): Electron.Rectangle {
@@ -110,41 +149,74 @@ async function loadRendererWindow(win: BrowserWindow, hash?: string): Promise<vo
   await win.loadFile(join(__dirname, '../renderer/index.html'), hash ? { hash } : undefined)
 }
 
-function animateWindowPosition(win: BrowserWindow, targetX: number, targetY: number): void {
-  const [startX, startY] = win.getPosition()
-
-  if (startX === targetX && startY === targetY) {
-    return
-  }
-
-  let currentStep = 0
-  const timer = setInterval(() => {
-    if (win.isDestroyed()) {
-      clearInterval(timer)
-      return
-    }
-
-    currentStep += 1
-    const progress = currentStep / ANIMATION_STEPS
-    const easedProgress = 1 - Math.pow(1 - progress, 3)
-    const nextX = Math.round(startX + (targetX - startX) * easedProgress)
-    const nextY = Math.round(startY + (targetY - startY) * easedProgress)
-
-    win.setPosition(nextX, nextY)
-
-    if (currentStep >= ANIMATION_STEPS) {
-      clearInterval(timer)
-    }
-  }, ANIMATION_INTERVAL_MS)
-}
-
 function getDisplayWorkArea(win: BrowserWindow): Electron.Rectangle {
   return screen.getDisplayMatching(win.getBounds()).workArea
 }
 
+function normalizeWindowSize(size: FloatingWindowSize): FloatingWindowSize {
+  return {
+    width: Math.max(MIN_WINDOW_WIDTH, Math.round(size.width)),
+    height: Math.max(MIN_WINDOW_HEIGHT, Math.round(size.height))
+  }
+}
+
+function getDefaultDockedSize(windowState: DockedWindowState): FloatingWindowSize {
+  if (windowState === 'docked-left' || windowState === 'docked-right') {
+    return {
+      width: HANDLE_WIDTH,
+      height: RESTORED_WINDOW_HEIGHT
+    }
+  }
+
+  return {
+    width: RESTORED_WINDOW_HEIGHT,
+    height: HANDLE_WIDTH
+  }
+}
+
+function getDockedSize(
+  bounds: Pick<Electron.Rectangle, 'width' | 'height'>,
+  windowState: DockedWindowState,
+  size?: FloatingWindowSize
+): FloatingWindowSize {
+  if (size) {
+    return normalizeWindowSize(size)
+  }
+
+  if (
+    (windowState === 'docked-left' || windowState === 'docked-right') &&
+    bounds.width <= HANDLE_WIDTH * 2
+  ) {
+    return normalizeWindowSize(bounds)
+  }
+
+  if (
+    (windowState === 'docked-top' || windowState === 'docked-bottom') &&
+    bounds.height <= HANDLE_WIDTH * 2
+  ) {
+    return normalizeWindowSize(bounds)
+  }
+
+  return getDefaultDockedSize(windowState)
+}
+
+function applyWindowBounds(win: BrowserWindow, bounds: FloatingWindowBounds): void {
+  const wasResizable = win.isResizable()
+
+  if (!wasResizable) {
+    win.setResizable(true)
+  }
+
+  win.setBounds(bounds, false)
+
+  if (!wasResizable) {
+    win.setResizable(false)
+  }
+}
+
 function getDockedPositionForBounds(
   bounds: Pick<Electron.Rectangle, 'x' | 'y' | 'width' | 'height'>,
-  nextState: Exclude<AppConfig['windowState'], 'normal'>,
+  nextState: DockedWindowState,
   workArea: Electron.Rectangle
 ): { x: number; y: number } {
   const maxX = workArea.x + workArea.width - bounds.width
@@ -174,56 +246,59 @@ function getDockedPositionForBounds(
   }
 }
 
-function getSanitizedFloatingWindowPosition(
-  config: AppConfig,
-  size: { width: number; height: number } = {
-    width: FLOATING_WINDOW_WIDTH,
-    height: FLOATING_WINDOW_HEIGHT
-  }
-): { x: number; y: number } {
-  const bounds = {
-    x: config.windowPosition.x,
-    y: config.windowPosition.y,
-    width: size.width,
-    height: size.height
-  }
-  const workArea = getWorkAreaForPoint(config.windowPosition)
+export function getWindowBoundsForState(
+  bounds: FloatingWindowBounds,
+  windowState: AppConfig['windowState'],
+  workArea: Electron.Rectangle,
+  size?: FloatingWindowSize
+): FloatingWindowBounds {
+  if (!isDockedWindowState(windowState)) {
+    const nextSize = size ? normalizeWindowSize(size) : bounds
+    const nextBounds = {
+      ...bounds,
+      width: nextSize.width,
+      height: nextSize.height
+    }
 
-  if (config.windowState === 'normal') {
-    return getClampedPosition(bounds, workArea)
+    return {
+      ...nextBounds,
+      ...getClampedPosition(nextBounds, workArea)
+    }
   }
 
-  return getDockedPositionForBounds(bounds, config.windowState, workArea)
+  const dockedSize = getDockedSize(bounds, windowState, size)
+  const dockedBounds = {
+    x: bounds.x,
+    y: bounds.y,
+    width: dockedSize.width,
+    height: dockedSize.height
+  }
+
+  return {
+    ...dockedBounds,
+    ...getDockedPositionForBounds(dockedBounds, windowState, workArea)
+  }
 }
 
-function getRestoredPosition(win: BrowserWindow): { x: number; y: number } {
-  const bounds = win.getBounds()
-  const workArea = getDisplayWorkArea(win)
-  const clampedPosition = getClampedPosition(bounds, workArea)
+function getInitialFloatingWindowBounds(config: AppConfig): FloatingWindowBounds {
+  const initialSize = isDockedWindowState(config.windowState)
+    ? getDefaultDockedSize(config.windowState)
+    : {
+        width: FLOATING_WINDOW_WIDTH,
+        height: FLOATING_WINDOW_HEIGHT
+      }
 
-  if (bounds.x < workArea.x + EDGE_DOCK_THRESHOLD) {
-    return { x: workArea.x, y: clampedPosition.y }
-  }
-
-  if (bounds.x + bounds.width > workArea.x + workArea.width - EDGE_DOCK_THRESHOLD) {
-    return {
-      x: workArea.x + workArea.width - bounds.width,
-      y: clampedPosition.y
-    }
-  }
-
-  if (bounds.y < workArea.y + EDGE_DOCK_THRESHOLD) {
-    return { x: clampedPosition.x, y: workArea.y }
-  }
-
-  if (bounds.y + bounds.height > workArea.y + workArea.height - EDGE_DOCK_THRESHOLD) {
-    return {
-      x: clampedPosition.x,
-      y: workArea.y + workArea.height - bounds.height
-    }
-  }
-
-  return clampedPosition
+  return getWindowBoundsForState(
+    {
+      x: config.windowPosition.x,
+      y: config.windowPosition.y,
+      width: initialSize.width,
+      height: initialSize.height
+    },
+    config.windowState,
+    getWorkAreaForPoint(config.windowPosition),
+    initialSize
+  )
 }
 
 export function ensureFloatingWindowVisible(
@@ -232,16 +307,18 @@ export function ensureFloatingWindowVisible(
 ): { x: number; y: number } {
   const currentBounds = win.getBounds()
   const workArea = getDisplayWorkArea(win)
-  const targetPosition =
-    windowState === 'normal'
-      ? getClampedPosition(currentBounds, workArea)
-      : getDockedPositionForBounds(currentBounds, windowState, workArea)
+  const targetBounds = getWindowBoundsForState(currentBounds, windowState, workArea)
 
-  if (currentBounds.x !== targetPosition.x || currentBounds.y !== targetPosition.y) {
-    win.setPosition(targetPosition.x, targetPosition.y)
+  if (
+    currentBounds.x !== targetBounds.x ||
+    currentBounds.y !== targetBounds.y ||
+    currentBounds.width !== targetBounds.width ||
+    currentBounds.height !== targetBounds.height
+  ) {
+    applyWindowBounds(win, targetBounds)
   }
 
-  return targetPosition
+  return { x: targetBounds.x, y: targetBounds.y }
 }
 
 export function restoreFloatingWindow(win: BrowserWindow): { x: number; y: number } {
@@ -277,13 +354,13 @@ export function restoreFloatingWindow(win: BrowserWindow): { x: number; y: numbe
 
 export function createFloatingWindow(): BrowserWindow {
   const config = getConfig()
-  const initialPosition = getSanitizedFloatingWindowPosition(config)
+  const initialBounds = getInitialFloatingWindowBounds(config)
 
   const win = new BrowserWindow({
-    width: FLOATING_WINDOW_WIDTH,
-    height: FLOATING_WINDOW_HEIGHT,
-    x: initialPosition.x,
-    y: initialPosition.y,
+    width: initialBounds.width,
+    height: initialBounds.height,
+    x: initialBounds.x,
+    y: initialBounds.y,
     show: false,
     frame: false,
     transparent: true,
@@ -304,11 +381,11 @@ export function createFloatingWindow(): BrowserWindow {
   attachExternalLinkHandler(win)
 
   if (
-    initialPosition.x !== config.windowPosition.x ||
-    initialPosition.y !== config.windowPosition.y
+    initialBounds.x !== config.windowPosition.x ||
+    initialBounds.y !== config.windowPosition.y
   ) {
     setConfig({
-      windowPosition: initialPosition
+      windowPosition: { x: initialBounds.x, y: initialBounds.y }
     })
   }
 
@@ -412,26 +489,30 @@ export function setupEdgeDocking(win: BrowserWindow): void {
     return
   }
 
-  ipcMain.on('window:set-state', (_event, nextState) => {
+  ipcMain.on('window:set-state', (_event, nextRequest) => {
     const floatingWindow = resolveWindowInstance('floating')
+    const request = resolveWindowStateRequest(nextRequest)
 
-    if (!floatingWindow || !isWindowState(nextState)) {
+    if (!floatingWindow || !request) {
       return
     }
 
-    const targetPosition =
-      nextState === 'normal'
-        ? getRestoredPosition(floatingWindow)
-        : getDockedPositionForBounds(
-            floatingWindow.getBounds(),
-            nextState,
-            getDisplayWorkArea(floatingWindow)
-          )
+    if (request.state === 'normal') {
+      restoreFloatingWindow(floatingWindow)
+      return
+    }
 
-    animateWindowPosition(floatingWindow, targetPosition.x, targetPosition.y)
+    const targetBounds = getWindowBoundsForState(
+      floatingWindow.getBounds(),
+      request.state,
+      getDisplayWorkArea(floatingWindow),
+      request.size
+    )
+
+    applyWindowBounds(floatingWindow, targetBounds)
     setConfig({
-      windowState: nextState,
-      windowPosition: targetPosition
+      windowState: request.state,
+      windowPosition: { x: targetBounds.x, y: targetBounds.y }
     })
   })
 
@@ -441,9 +522,18 @@ export function setupEdgeDocking(win: BrowserWindow): void {
 export function resizeWindow(win: BrowserWindow, width: number, height: number): void {
   const nextWidth = Math.max(MIN_WINDOW_WIDTH, Math.round(width))
   const nextHeight = Math.max(MIN_WINDOW_HEIGHT, Math.round(height))
+  const windowState = getConfig().windowState
+  const nextBounds = getWindowBoundsForState(
+    {
+      ...win.getBounds(),
+      width: nextWidth,
+      height: nextHeight
+    },
+    windowState,
+    getDisplayWorkArea(win),
+    { width: nextWidth, height: nextHeight }
+  )
 
-  win.setSize(nextWidth, nextHeight)
-
-  const nextPosition = ensureFloatingWindowVisible(win, getConfig().windowState)
-  setConfig({ windowPosition: nextPosition })
+  applyWindowBounds(win, nextBounds)
+  setConfig({ windowPosition: { x: nextBounds.x, y: nextBounds.y } })
 }

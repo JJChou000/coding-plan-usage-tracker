@@ -845,3 +845,15 @@
 - [x] 在设置页增加“重置浮窗位置”入口，作为当前版本的手动恢复手段。
 - [x] 在 `v0.2.2` 版本更新展示中加入已知问题说明，并明确建议当前版本优先只吸附在右边。
 - [ ] 顶部和左侧吸附异常仍未完全修复，下一步继续定位根因并完成正式修复。
+
+## Issue #49：右侧吸附态透明命中区域过大
+
+- [x] **操作**：
+  1. 在 `src/main/window.ts` 中收敛吸附态窗口 bounds 计算，统一由主进程计算右侧/左侧/顶部/底部吸附时的真实窗口尺寸与位置
+  2. 调整 `ensureFloatingWindowVisible()`、`createFloatingWindow()`、`setupEdgeDocking()` 与 `resizeWindow()`，让吸附态不再仅移动窗口，而是同步收缩到把手尺寸
+  3. 调整 `src/preload/preload.ts`、`src/preload/index.d.ts` 与 `src/renderer/hooks/useWindowDrag.ts`，让渲染进程在进入吸附态时把目标把手尺寸一并发送给主进程
+  4. 补充 `src/main/window.test.ts` 回归测试，锁定右侧吸附时窗口实际 bounds 会收缩到把手尺寸，不再保留大块透明命中区域
+- [x] **验收标准**：
+  1. 右侧吸附后，主进程中的 `BrowserWindow` 实际 bounds 收缩到 `24x52`
+  2. 右侧把手左侧不再存在大块透明点击遮挡区域
+  3. `npm run typecheck`、`npm test` 与 `npm run build:app` 通过
