@@ -1,6 +1,14 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import type { AppConfig, ProviderUsageData } from '../shared/types'
 
+type WindowStatePayload = {
+  state: AppConfig['windowState']
+  size?: {
+    width: number
+    height: number
+  }
+}
+
 const electronAPI = {
   getConfig: () => ipcRenderer.invoke('config:get') as Promise<AppConfig>,
   setConfig: (config: AppConfig) => ipcRenderer.invoke('config:set', config),
@@ -19,7 +27,8 @@ const electronAPI = {
   },
   setWindowPosition: (pos: { x: number; y: number }) =>
     ipcRenderer.send('window:set-position', pos),
-  setWindowState: (state: string) => ipcRenderer.send('window:set-state', state),
+  setWindowState: (state: AppConfig['windowState'] | WindowStatePayload) =>
+    ipcRenderer.send('window:set-state', state),
   restoreFloatingWindow: () => ipcRenderer.invoke('window:restore') as Promise<void>,
   resizeWindow: (width: number, height: number) => ipcRenderer.send('window:resize', width, height),
   onRefresh: (callback: () => void) => {

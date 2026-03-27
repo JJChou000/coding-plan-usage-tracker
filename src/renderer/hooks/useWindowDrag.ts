@@ -382,7 +382,13 @@ export function useWindowDrag({
             lastNormalPositionRef.current = nextPosition
 
             if (nextDockState) {
-              window.electronAPI?.setWindowState?.(nextDockState)
+              window.electronAPI?.setWindowState?.({
+                state: nextDockState,
+                size: {
+                  width: FLOATING_WINDOW_LAYOUT.handleWidth,
+                  height: activeSize.handleLength
+                }
+              })
               dispatch({
                 type: 'SET_CONFIG',
                 payload: {

@@ -38,19 +38,27 @@ import { getConfig, setConfig } from './configStore'
 import {
   ensureFloatingWindowVisible,
   getSanitizedFloatingWindowPlacement,
+  getWindowBoundsForState,
   resizeWindow,
   restoreFloatingWindow
 } from './window'
 
 function createMockWindow(initialBounds: { x: number; y: number; width: number; height: number }): {
   win: BrowserWindow
+  setBounds: ReturnType<typeof vi.fn>
   setPosition: ReturnType<typeof vi.fn>
+  setResizable: ReturnType<typeof vi.fn>
   setSize: ReturnType<typeof vi.fn>
   show: ReturnType<typeof vi.fn>
   focus: ReturnType<typeof vi.fn>
   restore: ReturnType<typeof vi.fn>
 } {
   let bounds = { ...initialBounds }
+  const setBounds = vi.fn(
+    (nextBounds: { x: number; y: number; width: number; height: number }) => {
+      bounds = { ...nextBounds }
+    }
+  )
   const setSize = vi.fn((width: number, height: number) => {
     bounds = {
       ...bounds,
@@ -68,25 +76,58 @@ function createMockWindow(initialBounds: { x: number; y: number; width: number; 
   const show = vi.fn()
   const focus = vi.fn()
   const restore = vi.fn()
+  const setResizable = vi.fn()
 
   return {
     win: {
       getBounds: () => ({ ...bounds }),
+      setBounds,
       setPosition,
+      setResizable,
       setSize,
+      isResizable: () => false,
       isMinimized: () => true,
       restore,
       isVisible: () => false,
       show,
       focus
     } as unknown as BrowserWindow,
+    setBounds,
     setPosition,
+    setResizable,
     setSize,
     show,
     focus,
     restore
   }
 }
+
+describe('getWindowBoundsForState', () => {
+  it('shrinks an oversized right-docked window down to the handle bounds', () => {
+    const nextBounds = getWindowBoundsForState(
+      {
+        x: 1512,
+        y: 120,
+        width: 320,
+        height: 120
+      },
+      'docked-right',
+      {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080
+      }
+    )
+
+    expect(nextBounds).toEqual({
+      x: 1896,
+      y: 120,
+      width: 24,
+      height: 52
+    })
+  })
+})
 
 describe('resizeWindow', () => {
   beforeEach(() => {
@@ -119,7 +160,7 @@ describe('resizeWindow', () => {
       windowOpacity: 1
     })
 
-    const { win, setPosition, setSize } = createMockWindow({
+    const { win, setBounds, setResizable } = createMockWindow({
       x: 1700,
       y: 120,
       width: 248,
@@ -128,11 +169,56 @@ describe('resizeWindow', () => {
 
     resizeWindow(win, 320, 120)
 
-    expect(setSize).toHaveBeenCalledWith(320, 120)
-    expect(setPosition).toHaveBeenCalledWith(1600, 120)
+    expect(setResizable).toHaveBeenNthCalledWith(1, true)
+    expect(setBounds).toHaveBeenCalledWith(
+      {
+        x: 1600,
+        y: 120,
+        width: 320,
+        height: 120
+      },
+      false
+    )
+    expect(setResizable).toHaveBeenNthCalledWith(2, false)
     expect(setConfig).toHaveBeenCalledWith({
       windowState: 'normal',
       windowPosition: { x: 1600, y: 120 }
+    })
+  })
+
+  it('shrinks a docked-right floating window to the requested handle size', () => {
+    vi.mocked(getConfig).mockReturnValue({
+      providers: [],
+      refreshInterval: 60,
+      windowPosition: { x: 1512, y: 120 },
+      windowState: 'docked-right',
+      isExpanded: false,
+      windowOpacity: 1
+    })
+
+    const { win, setBounds, setResizable } = createMockWindow({
+      x: 1512,
+      y: 120,
+      width: 320,
+      height: 120
+    })
+
+    resizeWindow(win, 24, 52)
+
+    expect(setResizable).toHaveBeenNthCalledWith(1, true)
+    expect(setBounds).toHaveBeenCalledWith(
+      {
+        x: 1896,
+        y: 120,
+        width: 24,
+        height: 52
+      },
+      false
+    )
+    expect(setResizable).toHaveBeenNthCalledWith(2, false)
+    expect(setConfig).toHaveBeenCalledWith({
+      windowState: 'docked-right',
+      windowPosition: { x: 1896, y: 120 }
     })
   })
 
@@ -175,7 +261,7 @@ describe('resizeWindow', () => {
   })
 
   it('keeps unsupported dock states from being reapplied when forcing the window visible', () => {
-    const { win, setPosition } = createMockWindow({
+    const { win, setBounds, setResizable } = createMockWindow({
       x: 360,
       y: -96,
       width: 320,
@@ -184,10 +270,61 @@ describe('resizeWindow', () => {
 
     const nextPlacement = ensureFloatingWindowVisible(win, 'docked-top')
 
-    expect(setPosition).toHaveBeenCalledWith(360, 0)
+    expect(setResizable).toHaveBeenNthCalledWith(1, true)
+    expect(setBounds).toHaveBeenCalledWith(
+      {
+        x: 360,
+        y: 0,
+        width: 320,
+        height: 120
+      },
+      false
+    )
+    expect(setResizable).toHaveBeenNthCalledWith(2, false)
     expect(nextPlacement).toEqual({
       windowState: 'normal',
       windowPosition: { x: 360, y: 0 }
+    })
+  })
+})
+
+describe('ensureFloatingWindowVisible', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(screen.getDisplayMatching).mockReturnValue({
+      workArea: {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080
+      }
+    } as never)
+  })
+
+  it('corrects an old oversized right-docked window before showing it again', () => {
+    const { win, setBounds, setResizable } = createMockWindow({
+      x: 1512,
+      y: 120,
+      width: 320,
+      height: 120
+    })
+
+    const nextPlacement = ensureFloatingWindowVisible(win, 'docked-right')
+
+    expect(setResizable).toHaveBeenNthCalledWith(1, true)
+    expect(setBounds).toHaveBeenCalledWith(
+      {
+        x: 1896,
+        y: 120,
+        width: 24,
+        height: 52
+      },
+      false
+    )
+    expect(setResizable).toHaveBeenNthCalledWith(2, false)
+    expect(nextPlacement).toEqual({
+      windowState: 'docked-right',
+      windowPosition: { x: 1896, y: 120 }
     })
   })
 })

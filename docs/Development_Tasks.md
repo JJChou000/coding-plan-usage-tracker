@@ -861,3 +861,14 @@
 - [x] 在渲染层拖拽判定中禁用上、左、下吸附，仅保留右侧吸附行为。
 - [x] 在主进程启动、托盘恢复和窗口重定位时净化历史吸附状态，将旧的上、左、下吸附自动回退到可视区域。
 - [x] 更新设置页、README、PRD、Engineering 与 Changelog 文案，明确当前产品约束为“仅支持右侧吸附”。
+
+## Issue #49：右侧吸附态透明命中区域过大
+
+- [x] 在 `src/main/window.ts` 中收敛右侧吸附态窗口 bounds 计算，统一由主进程计算真实窗口尺寸与位置。
+- [x] 调整 `ensureFloatingWindowVisible()`、`createFloatingWindow()`、`setupEdgeDocking()` 与 `resizeWindow()`，让右侧吸附态不再仅移动窗口，而是同步收缩到把手尺寸。
+- [x] 调整 `src/preload/preload.ts`、`src/preload/index.d.ts` 与 `src/renderer/hooks/useWindowDrag.ts`，让渲染进程在进入右侧吸附态时把目标把手尺寸一并发送给主进程。
+- [x] 补充 `src/main/window.test.ts` 回归测试，锁定右侧吸附时窗口实际 bounds 会收缩到 `24x52`，不再保留大块透明命中区域。
+- [x] 验收标准：
+  1. 右侧吸附后，主进程中的 `BrowserWindow` 实际 bounds 收缩到 `24x52`
+  2. 右侧把手左侧不再存在大块透明点击遮挡区域
+  3. `npm run typecheck`、`npm test` 与 `npm run build:app` 通过
