@@ -30,15 +30,6 @@ type StatusTone = 'ok' | 'error' | 'empty'
 
 const REFRESH_OPTIONS = [30, 60, 120, 300] as const
 const HIDDEN_PROVIDER_IDS = new Set(['bailian'])
-const RELEASE_VERSION = '0.2.2'
-const RELEASE_HIGHLIGHTS = [
-  '设置面板新增“重置浮窗位置”，可在浮窗异常时手动拉回可视区域。',
-  '浮窗吸附能力已收敛为仅支持右侧吸附，避免历史上的异常吸附路径再次出现。'
-]
-const RELEASE_LIMITATIONS = [
-  '当前版本仅支持右侧吸附；拖拽到上、左、下边缘时不会进入吸附态。',
-  '若历史配置曾停留在上、左、下吸附，应用会在启动或托盘恢复时自动回退到可视区域。'
-]
 
 function getProviderFields(providerId: string): AuthField[] {
   return getProvider(providerId)?.getAuthFields() ?? []
@@ -420,38 +411,6 @@ function SettingsPanel(): React.JSX.Element {
               })}
             </div>
           )}
-        </section>
-
-        <section className="settings-panel__section settings-panel__release">
-          <div className="settings-panel__section-head">
-            <div>
-              <h2 className="settings-panel__section-title">v{RELEASE_VERSION} 版本更新</h2>
-              <p className="settings-panel__section-copy">
-                本次版本在保留恢复能力的同时，明确将吸附行为收敛为仅支持右侧吸附，避免继续触发历史异常路径。
-              </p>
-            </div>
-            <span className="settings-panel__release-badge">Release {RELEASE_VERSION}</span>
-          </div>
-
-          <div className="settings-panel__release-grid">
-            <article className="settings-panel__release-card">
-              <h3 className="settings-panel__release-title">本次更新</h3>
-              <ul className="settings-panel__release-list">
-                {RELEASE_HIGHLIGHTS.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="settings-panel__release-card settings-panel__release-card--warning">
-              <h3 className="settings-panel__release-title">当前限制</h3>
-              <ul className="settings-panel__release-list">
-                {RELEASE_LIMITATIONS.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          </div>
         </section>
 
         <footer className="settings-panel__footer">

@@ -131,58 +131,6 @@
   line-height: 1.55;
 }
 
-.settings-panel__release-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  border: 1px solid rgba(74, 222, 128, 0.24);
-  border-radius: 999px;
-  background: rgba(74, 222, 128, 0.08);
-  color: #bbf7d0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-
-.settings-panel__release-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 16px;
-}
-
-.settings-panel__release-card {
-  padding: 14px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.settings-panel__release-card--warning {
-  border-color: rgba(250, 204, 21, 0.22);
-  background: rgba(250, 204, 21, 0.08);
-}
-
-.settings-panel__release-title {
-  margin: 0 0 10px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.settings-panel__release-list {
-  margin: 0;
-  padding-left: 18px;
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.6;
-}
-
-.settings-panel__release-list li + li {
-  margin-top: 6px;
-}
-
 .settings-panel__alert,
 .settings-panel__error {
   padding: 12px 14px;
@@ -510,7 +458,4 @@
     justify-items: stretch;
   }
 
-  .settings-panel__release-grid {
-    grid-template-columns: 1fr;
-  }
 }
