@@ -16,8 +16,11 @@ const ZHIPU_AUTH_FIELDS: AuthField[] = [
 
 interface ZhipuUsageLimit {
   type?: string
+  unit?: number | string | null
+  number?: number | string | null
   usage?: number | string | null
   currentValue?: number | string | null
+  remaining?: number | string | null
   percentage?: number | string | null
   nextResetTime?: number | string | null
 }
@@ -94,6 +97,22 @@ function formatTokenResetTime(nextResetTime: unknown): string | undefined {
   })
 }
 
+function formatAbsoluteResetTime(nextResetTime: unknown): string | undefined {
+  const resetDate = resolveResetDate(nextResetTime)
+
+  if (!resetDate) {
+    return undefined
+  }
+
+  const year = resetDate.getFullYear()
+  const month = String(resetDate.getMonth() + 1).padStart(2, '0')
+  const day = String(resetDate.getDate()).padStart(2, '0')
+  const hour = String(resetDate.getHours()).padStart(2, '0')
+  const minute = String(resetDate.getMinutes()).padStart(2, '0')
+
+  return `${year}-${month}-${day} ${hour}:${minute}`
+}
+
 function getStartOfNextMonth(referenceTimestamp: number): Date {
   const referenceDate = new Date(referenceTimestamp)
 
@@ -110,13 +129,7 @@ function formatMonthlyResetTime(
     return undefined
   }
 
-  const year = resetDate.getFullYear()
-  const month = String(resetDate.getMonth() + 1).padStart(2, '0')
-  const day = String(resetDate.getDate()).padStart(2, '0')
-  const hour = String(resetDate.getHours()).padStart(2, '0')
-  const minute = String(resetDate.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hour}:${minute}`
+  return formatAbsoluteResetTime(resetDate.getTime())
 }
 
 function resolveLimits(rawResponse: ZhipuRawUsageResponse): ZhipuUsageLimit[] {
@@ -152,6 +165,51 @@ function getUsedPercent(limit: ZhipuUsageLimit): number {
   }
 
   return clampPercent(toFiniteNumber(limit.percentage) ?? 0)
+}
+
+function hasLimitSignature(
+  limit: ZhipuUsageLimit,
+  type: string,
+  unit: number,
+  number: number
+): boolean {
+  return (
+    limit.type === type &&
+    toFiniteNumber(limit.unit) === unit &&
+    toFiniteNumber(limit.number) === number
+  )
+}
+
+function isWeeklyLimit(limit: ZhipuUsageLimit): boolean {
+  return hasLimitSignature(limit, 'TOKENS_LIMIT', 6, 1)
+}
+
+function resolveFiveHourLimit(limits: ZhipuUsageLimit[]): ZhipuUsageLimit | undefined {
+  const explicitFiveHourLimit = limits.find((limit) =>
+    hasLimitSignature(limit, 'TOKENS_LIMIT', 3, 5)
+  )
+
+  if (explicitFiveHourLimit) {
+    return explicitFiveHourLimit
+  }
+
+  return limits.find((limit) => limit.type === 'TOKENS_LIMIT' && !isWeeklyLimit(limit))
+}
+
+function resolveWeeklyLimit(limits: ZhipuUsageLimit[]): ZhipuUsageLimit | undefined {
+  return limits.find((limit) => isWeeklyLimit(limit))
+}
+
+function resolveMonthlyLimit(limits: ZhipuUsageLimit[]): ZhipuUsageLimit | undefined {
+  const explicitMonthlyLimit = limits.find((limit) =>
+    hasLimitSignature(limit, 'TIME_LIMIT', 5, 1)
+  )
+
+  if (explicitMonthlyLimit) {
+    return explicitMonthlyLimit
+  }
+
+  return limits.find((limit) => limit.type === 'TIME_LIMIT')
 }
 
 function createDimension(
@@ -213,8 +271,9 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
 
   const referenceTimestamp = Date.now()
   const limits = resolveLimits(rawResponse)
-  const tokenLimit = limits.find((limit) => limit.type === 'TOKENS_LIMIT')
-  const mcpLimit = limits.find((limit) => limit.type === 'TIME_LIMIT')
+  const tokenLimit = resolveFiveHourLimit(limits)
+  const weeklyLimit = resolveWeeklyLimit(limits)
+  const mcpLimit = resolveMonthlyLimit(limits)
   const dimensions: QuotaDimension[] = []
 
   if (tokenLimit) {
@@ -224,6 +283,17 @@ export function parseZhipuUsageResponse(rawResponse: ZhipuRawUsageResponse): Pro
         label: '每 5 小时 Token',
         resetTime: formatTokenResetTime(tokenLimit.nextResetTime),
         isChecked: true
+      })
+    )
+  }
+
+  if (weeklyLimit) {
+    dimensions.push(
+      createDimension(weeklyLimit, {
+        id: 'token_weekly',
+        label: '每周用量',
+        resetTime: formatAbsoluteResetTime(weeklyLimit.nextResetTime),
+        isChecked: false
       })
     )
   }
