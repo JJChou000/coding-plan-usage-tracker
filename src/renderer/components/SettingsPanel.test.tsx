@@ -46,7 +46,7 @@ describe('SettingsPanel window recovery', () => {
 
     expect(html).toContain('重置浮窗位置')
     expect(html).toContain('v0.2.2 版本更新')
-    expect(html).toContain('当前版本建议优先只吸附在右边')
+    expect(html).toContain('当前版本仅支持右侧吸附')
   })
 
   it('delegates the reset action to electronAPI.restoreFloatingWindow', async () => {

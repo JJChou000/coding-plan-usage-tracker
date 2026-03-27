@@ -31,10 +31,13 @@ type StatusTone = 'ok' | 'error' | 'empty'
 const REFRESH_OPTIONS = [30, 60, 120, 300] as const
 const HIDDEN_PROVIDER_IDS = new Set(['bailian'])
 const RELEASE_VERSION = '0.2.2'
-const RELEASE_HIGHLIGHTS = ['设置面板新增“重置浮窗位置”，可在浮窗异常时手动拉回可视区域。']
-const RELEASE_KNOWN_ISSUES = [
-  '浮窗吸附到屏幕上边或左边时仍可能出现不可见或异常行为。',
-  '当前版本建议优先只吸附在右边，顶部和左侧吸附留待下一步继续修复。'
+const RELEASE_HIGHLIGHTS = [
+  '设置面板新增“重置浮窗位置”，可在浮窗异常时手动拉回可视区域。',
+  '浮窗吸附能力已收敛为仅支持右侧吸附，避免历史上的异常吸附路径再次出现。'
+]
+const RELEASE_LIMITATIONS = [
+  '当前版本仅支持右侧吸附；拖拽到上、左、下边缘时不会进入吸附态。',
+  '若历史配置曾停留在上、左、下吸附，应用会在启动或托盘恢复时自动回退到可视区域。'
 ]
 
 function getProviderFields(providerId: string): AuthField[] {
@@ -424,7 +427,7 @@ function SettingsPanel(): React.JSX.Element {
             <div>
               <h2 className="settings-panel__section-title">v{RELEASE_VERSION} 版本更新</h2>
               <p className="settings-panel__section-copy">
-                本次版本先发布可用的恢复能力，并同步展示当前已知问题，方便安装后第一时间避开风险用法。
+                本次版本在保留恢复能力的同时，明确将吸附行为收敛为仅支持右侧吸附，避免继续触发历史异常路径。
               </p>
             </div>
             <span className="settings-panel__release-badge">Release {RELEASE_VERSION}</span>
@@ -441,9 +444,9 @@ function SettingsPanel(): React.JSX.Element {
             </article>
 
             <article className="settings-panel__release-card settings-panel__release-card--warning">
-              <h3 className="settings-panel__release-title">已知问题</h3>
+              <h3 className="settings-panel__release-title">当前限制</h3>
               <ul className="settings-panel__release-list">
-                {RELEASE_KNOWN_ISSUES.map((item) => (
+                {RELEASE_LIMITATIONS.map((item) => (
                   <li key={item}>{item}</li>
                 ))}
               </ul>
