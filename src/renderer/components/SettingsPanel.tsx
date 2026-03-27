@@ -30,12 +30,6 @@ type StatusTone = 'ok' | 'error' | 'empty'
 
 const REFRESH_OPTIONS = [30, 60, 120, 300] as const
 const HIDDEN_PROVIDER_IDS = new Set(['bailian'])
-const RELEASE_VERSION = '0.2.2'
-const RELEASE_HIGHLIGHTS = ['设置面板新增“重置浮窗位置”，可在浮窗异常时手动拉回可视区域。']
-const RELEASE_KNOWN_ISSUES = [
-  '浮窗吸附到屏幕上边或左边时仍可能出现不可见或异常行为。',
-  '当前版本建议优先只吸附在右边，顶部和左侧吸附留待下一步继续修复。'
-]
 
 function getProviderFields(providerId: string): AuthField[] {
   return getProvider(providerId)?.getAuthFields() ?? []
@@ -417,38 +411,6 @@ function SettingsPanel(): React.JSX.Element {
               })}
             </div>
           )}
-        </section>
-
-        <section className="settings-panel__section settings-panel__release">
-          <div className="settings-panel__section-head">
-            <div>
-              <h2 className="settings-panel__section-title">v{RELEASE_VERSION} 版本更新</h2>
-              <p className="settings-panel__section-copy">
-                本次版本先发布可用的恢复能力，并同步展示当前已知问题，方便安装后第一时间避开风险用法。
-              </p>
-            </div>
-            <span className="settings-panel__release-badge">Release {RELEASE_VERSION}</span>
-          </div>
-
-          <div className="settings-panel__release-grid">
-            <article className="settings-panel__release-card">
-              <h3 className="settings-panel__release-title">本次更新</h3>
-              <ul className="settings-panel__release-list">
-                {RELEASE_HIGHLIGHTS.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="settings-panel__release-card settings-panel__release-card--warning">
-              <h3 className="settings-panel__release-title">已知问题</h3>
-              <ul className="settings-panel__release-list">
-                {RELEASE_KNOWN_ISSUES.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </article>
-          </div>
         </section>
 
         <footer className="settings-panel__footer">
