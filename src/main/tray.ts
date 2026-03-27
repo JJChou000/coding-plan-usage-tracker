@@ -2,7 +2,7 @@ import { app, Menu, Tray, nativeImage, type BrowserWindow, type NativeImage } fr
 import { join } from 'path'
 
 import { createSettingsWindow } from './window'
-import { getConfig } from './configStore'
+import { getConfig, setConfig } from './configStore'
 import { ensureFloatingWindowVisible } from './window'
 
 let tray: Tray | null = null
@@ -57,8 +57,8 @@ export function showMainWindowFromTray(mainWindow: BrowserWindow | null): void {
   }
 
   const { windowState } = getConfig()
-
-  ensureFloatingWindowVisible(mainWindow, windowState)
+  const nextPlacement = ensureFloatingWindowVisible(mainWindow, windowState)
+  setConfig(nextPlacement)
 
   if (!mainWindow.isVisible()) {
     mainWindow.show()

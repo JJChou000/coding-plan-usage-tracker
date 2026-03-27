@@ -35,7 +35,12 @@ vi.mock('electron', () => ({
 import { screen, type BrowserWindow } from 'electron'
 import { getConfig, setConfig } from './configStore'
 
-import { resizeWindow, restoreFloatingWindow } from './window'
+import {
+  ensureFloatingWindowVisible,
+  getSanitizedFloatingWindowPlacement,
+  resizeWindow,
+  restoreFloatingWindow
+} from './window'
 
 function createMockWindow(initialBounds: { x: number; y: number; width: number; height: number }): {
   win: BrowserWindow
@@ -94,6 +99,14 @@ describe('resizeWindow', () => {
         height: 1080
       }
     } as never)
+    vi.mocked(screen.getDisplayNearestPoint).mockReturnValue({
+      workArea: {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080
+      }
+    } as never)
   })
 
   it('re-clamps the floating window after it grows near the right edge', () => {
@@ -118,6 +131,7 @@ describe('resizeWindow', () => {
     expect(setSize).toHaveBeenCalledWith(320, 120)
     expect(setPosition).toHaveBeenCalledWith(1600, 120)
     expect(setConfig).toHaveBeenCalledWith({
+      windowState: 'normal',
       windowPosition: { x: 1600, y: 120 }
     })
   })
@@ -141,6 +155,39 @@ describe('resizeWindow', () => {
     expect(setConfig).toHaveBeenCalledWith({
       windowState: 'normal',
       windowPosition: { x: 0, y: 120 }
+    })
+  })
+
+  it('sanitizes unsupported historical dock states back to a visible normal position', () => {
+    const sanitizedPlacement = getSanitizedFloatingWindowPlacement({
+      providers: [],
+      refreshInterval: 60,
+      windowPosition: { x: 360, y: -96 },
+      windowState: 'docked-top',
+      isExpanded: false,
+      windowOpacity: 1
+    })
+
+    expect(sanitizedPlacement).toEqual({
+      windowState: 'normal',
+      windowPosition: { x: 360, y: 0 }
+    })
+  })
+
+  it('keeps unsupported dock states from being reapplied when forcing the window visible', () => {
+    const { win, setPosition } = createMockWindow({
+      x: 360,
+      y: -96,
+      width: 320,
+      height: 120
+    })
+
+    const nextPlacement = ensureFloatingWindowVisible(win, 'docked-top')
+
+    expect(setPosition).toHaveBeenCalledWith(360, 0)
+    expect(nextPlacement).toEqual({
+      windowState: 'normal',
+      windowPosition: { x: 360, y: 0 }
     })
   })
 })

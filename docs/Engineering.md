@@ -147,6 +147,8 @@ interface AppState {
 }
 ```
 
+> 兼容性说明：`windowState` 仍保留历史吸附枚举值以兼容旧配置，但运行时仅允许 `normal` 与 `docked-right` 生效；读取到 `docked-left` / `docked-top` / `docked-bottom` 时会自动回退到 `normal`。
+
 ### 3.2 配置存储结构 (electron-store)
 
 ```json
@@ -187,7 +189,7 @@ interface AppState {
 | `usage:fetch` | Renderer → Main → Renderer | 请求获取厂商用量数据 |
 | `usage:data` | Main → Renderer | 推送最新用量数据 |
 | `window:set-position` | Renderer → Main | 更新窗口位置 |
-| `window:set-state` | Renderer → Main | 更新窗口状态（正常/吸附） |
+| `window:set-state` | Renderer → Main | 更新窗口状态（正常/仅右侧吸附） |
 | `window:toggle-expand` | Renderer → Main | 切换折叠/展开（需调整窗口尺寸） |
 | `app:refresh` | Main → Renderer | 托盘菜单触发刷新 |
 | `app:open-settings` | Main → Renderer | 托盘菜单打开设置 |
@@ -303,17 +305,17 @@ coding-plan-usage-tracker/
   - CSS 使用 `backdrop-filter: blur()` + 半透明背景色
   - 若需更原生效果，可使用 `@aspect-apps/electron-vibrancy` 等第三方库（作为增强项）
 
-### 6.3 边缘吸附算法
+### 6.3 边缘吸附算法（当前仅右侧）
 
 ```
 1. 监听窗口拖拽结束事件
 2. 获取窗口最终位置 (x, y) 和屏幕尺寸
-3. 判断边缘阈值（距边缘 < 20px）：
-   - 左边缘: x < 20 → 状态设为 'docked-left'，窗口 x 设为 -(窗口宽度 - 把手宽度)
-   - 右边缘: x + 窗口宽度 > 屏幕宽度 - 20 → 类似处理
-   - 上/下边缘: 类似处理
+3. 判断右边缘阈值（距右边缘 < 20px）：
+   - 右边缘: x + 窗口宽度 > 屏幕宽度 - 20 → 状态设为 'docked-right'，窗口 x 设为 `屏幕宽度 - 把手宽度`
+   - 其余边缘：不触发吸附，保持 `normal`
 4. 吸附后显示 EdgeHandle 组件
 5. 点击 EdgeHandle → 恢复正常位置
+6. 若读到历史配置中的 `docked-left` / `docked-top` / `docked-bottom`，启动和托盘恢复时自动回退到 `normal`
 ```
 
 ### 6.4 刷新策略

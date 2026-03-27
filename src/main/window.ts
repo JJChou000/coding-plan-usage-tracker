@@ -24,6 +24,11 @@ let dragListenerRegistered = false
 let dockingListenerRegistered = false
 
 type ManagedWindowKind = 'floating' | 'settings'
+type SupportedWindowState = Extract<AppConfig['windowState'], 'normal' | 'docked-right'>
+type FloatingWindowPlacement = {
+  windowState: SupportedWindowState
+  windowPosition: { x: number; y: number }
+}
 
 const windowInstances = new WeakMap<BrowserWindow, ManagedWindowKind>()
 
@@ -174,13 +179,19 @@ function getDockedPositionForBounds(
   }
 }
 
-function getSanitizedFloatingWindowPosition(
+export function normalizeFloatingWindowState(
+  windowState: AppConfig['windowState']
+): SupportedWindowState {
+  return windowState === 'docked-right' ? 'docked-right' : 'normal'
+}
+
+export function getSanitizedFloatingWindowPlacement(
   config: AppConfig,
   size: { width: number; height: number } = {
     width: FLOATING_WINDOW_WIDTH,
     height: FLOATING_WINDOW_HEIGHT
   }
-): { x: number; y: number } {
+): FloatingWindowPlacement {
   const bounds = {
     x: config.windowPosition.x,
     y: config.windowPosition.y,
@@ -188,12 +199,19 @@ function getSanitizedFloatingWindowPosition(
     height: size.height
   }
   const workArea = getWorkAreaForPoint(config.windowPosition)
+  const windowState = normalizeFloatingWindowState(config.windowState)
 
-  if (config.windowState === 'normal') {
-    return getClampedPosition(bounds, workArea)
+  if (windowState === 'normal') {
+    return {
+      windowState,
+      windowPosition: getClampedPosition(bounds, workArea)
+    }
   }
 
-  return getDockedPositionForBounds(bounds, config.windowState, workArea)
+  return {
+    windowState,
+    windowPosition: getDockedPositionForBounds(bounds, windowState, workArea)
+  }
 }
 
 function getRestoredPosition(win: BrowserWindow): { x: number; y: number } {
@@ -229,19 +247,23 @@ function getRestoredPosition(win: BrowserWindow): { x: number; y: number } {
 export function ensureFloatingWindowVisible(
   win: BrowserWindow,
   windowState: AppConfig['windowState'] = 'normal'
-): { x: number; y: number } {
+): FloatingWindowPlacement {
   const currentBounds = win.getBounds()
   const workArea = getDisplayWorkArea(win)
+  const sanitizedWindowState = normalizeFloatingWindowState(windowState)
   const targetPosition =
-    windowState === 'normal'
+    sanitizedWindowState === 'normal'
       ? getClampedPosition(currentBounds, workArea)
-      : getDockedPositionForBounds(currentBounds, windowState, workArea)
+      : getDockedPositionForBounds(currentBounds, sanitizedWindowState, workArea)
 
   if (currentBounds.x !== targetPosition.x || currentBounds.y !== targetPosition.y) {
     win.setPosition(targetPosition.x, targetPosition.y)
   }
 
-  return targetPosition
+  return {
+    windowState: sanitizedWindowState,
+    windowPosition: targetPosition
+  }
 }
 
 export function restoreFloatingWindow(win: BrowserWindow): { x: number; y: number } {
@@ -277,13 +299,13 @@ export function restoreFloatingWindow(win: BrowserWindow): { x: number; y: numbe
 
 export function createFloatingWindow(): BrowserWindow {
   const config = getConfig()
-  const initialPosition = getSanitizedFloatingWindowPosition(config)
+  const initialPlacement = getSanitizedFloatingWindowPlacement(config)
 
   const win = new BrowserWindow({
     width: FLOATING_WINDOW_WIDTH,
     height: FLOATING_WINDOW_HEIGHT,
-    x: initialPosition.x,
-    y: initialPosition.y,
+    x: initialPlacement.windowPosition.x,
+    y: initialPlacement.windowPosition.y,
     show: false,
     frame: false,
     transparent: true,
@@ -304,12 +326,11 @@ export function createFloatingWindow(): BrowserWindow {
   attachExternalLinkHandler(win)
 
   if (
-    initialPosition.x !== config.windowPosition.x ||
-    initialPosition.y !== config.windowPosition.y
+    initialPlacement.windowState !== config.windowState ||
+    initialPlacement.windowPosition.x !== config.windowPosition.x ||
+    initialPlacement.windowPosition.y !== config.windowPosition.y
   ) {
-    setConfig({
-      windowPosition: initialPosition
-    })
+    setConfig(initialPlacement)
   }
 
   win.on('ready-to-show', () => {
@@ -419,18 +440,19 @@ export function setupEdgeDocking(win: BrowserWindow): void {
       return
     }
 
+    const sanitizedWindowState = normalizeFloatingWindowState(nextState)
     const targetPosition =
-      nextState === 'normal'
+      sanitizedWindowState === 'normal'
         ? getRestoredPosition(floatingWindow)
         : getDockedPositionForBounds(
             floatingWindow.getBounds(),
-            nextState,
+            sanitizedWindowState,
             getDisplayWorkArea(floatingWindow)
           )
 
     animateWindowPosition(floatingWindow, targetPosition.x, targetPosition.y)
     setConfig({
-      windowState: nextState,
+      windowState: sanitizedWindowState,
       windowPosition: targetPosition
     })
   })
@@ -444,6 +466,6 @@ export function resizeWindow(win: BrowserWindow, width: number, height: number):
 
   win.setSize(nextWidth, nextHeight)
 
-  const nextPosition = ensureFloatingWindowVisible(win, getConfig().windowState)
-  setConfig({ windowPosition: nextPosition })
+  const nextPlacement = ensureFloatingWindowVisible(win, getConfig().windowState)
+  setConfig(nextPlacement)
 }
